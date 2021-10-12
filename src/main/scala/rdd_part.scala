@@ -1,6 +1,7 @@
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.util.AccumulatorV2
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable
@@ -156,9 +157,53 @@ import scala.collection.mutable
     //    rdd.checkpoint()
 
     //=====================================================
-    //==================  RDD容错  =========================
+    //==================  分布式变量  =========================
     //=====================================================
+
+    //----------------  全局累加器  ----------------
+    // 支持数值型累加add()的分布式变量,默认值为0,遇到action算子触发
+    val counter = sc.longAccumulator("counter")
+    sc.makeRDD(Seq(1, 2, 3, 4)).foreach(counter.add(_))
+    print(counter.value)
+
+    //----------------  广播变量  ----------------
+    //
+
 
   }
 
+}
+
+// 自定义累加器
+class InfoAccumulator extends AccumulatorV2[String, Set[String]] {
+  private val infos: mutable.Set[String] = mutable.Set()
+
+  override def isZero: Boolean = ???
+
+  override def copy(): AccumulatorV2[String, Set[String]] = {
+    val infoAccumulator = new InfoAccumulator()
+    infos.synchronized {
+      infoAccumulator.infos ++= infos
+    }
+    infoAccumulator
+  }
+
+  // reset方法用于把累加器重置为 0
+  override def reset(): Unit = {
+    infos.clear()
+  }
+
+  // add方法用于把其它值添加到累加器中
+  override def add(v: String): Unit = {
+    infos += v
+  }
+
+  // merge方法用于指定如何合并其他的累加器
+  override def merge(other: AccumulatorV2[String, Set[String]]): Unit = {
+    infos ++= other.value
+  }
+
+  override def value: Set[String] = {
+    infos.toSet
+  }
 }
