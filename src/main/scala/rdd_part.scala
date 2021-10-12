@@ -178,7 +178,9 @@ import scala.collection.mutable
 class InfoAccumulator extends AccumulatorV2[String, Set[String]] {
   private val infos: mutable.Set[String] = mutable.Set()
 
-  override def isZero: Boolean = ???
+  override def isZero: Boolean = {
+    infos.isEmpty
+  }
 
   override def copy(): AccumulatorV2[String, Set[String]] = {
     val infoAccumulator = new InfoAccumulator()
