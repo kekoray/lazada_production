@@ -164,24 +164,54 @@ import scala.collection.mutable
     // 支持数值型累加add()的分布式变量,默认值为0,遇到action算子触发
     val counter = sc.longAccumulator("counter")
     sc.makeRDD(Seq(1, 2, 3, 4)).foreach(counter.add(_))
-    print(counter.value)
+    //    print(counter.value)
+
+
+    //----------------  自定义累加器  ----------------
+    val infoAccumulator = new InfoAccumulator()
+    // 注册自定义累加器
+    sc.register(infoAccumulator, "infos")
+    sc.makeRDD(Seq("1", "2", "3", "4")).foreach(infoAccumulator.add)
+    //    print(counter.value)
+
 
     //----------------  广播变量  ----------------
-    //
+    // 1.创建广播变量
+    val a = sc.broadcast(1)
+    // 2.获取值
+    println(a.value)
+    // 3.销毁变量,释放内存空间
+    a.destroy()
+
+    // 唯一标识
+    println(a.id)
+    // 字符串表示
+    println(a.toString())
+    // 在Executor中异步的删除缓存副本
+    a.unpersist()
 
 
   }
 
 }
 
-// 自定义累加器
+
+// ============================================================================
+// ============================================================================
+// ============================================================================
+
+// 自定义累加器,继承AccumulatorV2,第一个参数是传入类型,第二个是输出类型
 class InfoAccumulator extends AccumulatorV2[String, Set[String]] {
+
+  // 创建可变集合用于收集累加值
   private val infos: mutable.Set[String] = mutable.Set()
 
+  // 定义初始化状态
   override def isZero: Boolean = {
     infos.isEmpty
   }
 
+  // 拷贝创建一个新对象
   override def copy(): AccumulatorV2[String, Set[String]] = {
     val infoAccumulator = new InfoAccumulator()
     infos.synchronized {
@@ -190,7 +220,7 @@ class InfoAccumulator extends AccumulatorV2[String, Set[String]] {
     infoAccumulator
   }
 
-  // reset方法用于把累加器重置为 0
+  // 重置累加器数据
   override def reset(): Unit = {
     infos.clear()
   }
@@ -205,6 +235,7 @@ class InfoAccumulator extends AccumulatorV2[String, Set[String]] {
     infos ++= other.value
   }
 
+  // 返回的结果
   override def value: Set[String] = {
     infos.toSet
   }
