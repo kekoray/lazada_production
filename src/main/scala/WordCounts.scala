@@ -25,6 +25,7 @@ object WordCounts {
     val wordsTuple: RDD[(String, Int)] = words.map((_, 1))
     val result: RDD[(String, Int)] = wordsTuple.reduceByKey((x, y) => x + y)
     result.foreach(println(_))
+    Thread.sleep(100000)
     sc.stop()
 
   }

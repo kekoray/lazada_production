@@ -18,13 +18,15 @@ import org.apache.spark.{SparkConf, SparkContext}
 object test {
 
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+//    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
     val conf = new SparkConf().setMaster("local[8]").setAppName("apptest")
     val sc = new SparkContext(conf)
     sc.setLogLevel("warn")
     val textrdd: RDD[String] = sc.textFile("src/main/resources/wordcount.txt")
     val result = textrdd.flatMap(_.split(" ")).map((_, 1)).reduceByKey(_ + _)
+
     result.foreach(print)
+    Thread.sleep(100000)
 
 //    result.cache()
 //    sc.setCheckpointDir("src/main/resources")

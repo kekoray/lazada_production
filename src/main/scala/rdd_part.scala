@@ -157,7 +157,7 @@ import scala.collection.mutable
     //    rdd.checkpoint()
 
     //=====================================================
-    //==================  分布式变量  =========================
+    //==================  分布式变量  ======================
     //=====================================================
 
     //----------------  全局累加器  ----------------
@@ -206,12 +206,12 @@ class InfoAccumulator extends AccumulatorV2[String, Set[String]] {
   // 创建可变集合用于收集累加值
   private val infos: mutable.Set[String] = mutable.Set()
 
-  // 定义初始化状态
+  // 初始化累加器对象是否为空
   override def isZero: Boolean = {
     infos.isEmpty
   }
 
-  // 拷贝创建一个新对象
+  // 拷贝创建一个新累加器对象
   override def copy(): AccumulatorV2[String, Set[String]] = {
     val infoAccumulator = new InfoAccumulator()
     infos.synchronized {
@@ -225,18 +225,19 @@ class InfoAccumulator extends AccumulatorV2[String, Set[String]] {
     infos.clear()
   }
 
-  // add方法用于把其它值添加到累加器中
+  // 外部传入要累加的内容,在这个方法中进行累加
   override def add(v: String): Unit = {
     infos += v
   }
 
-  // merge方法用于指定如何合并其他的累加器
+  // 累加器在进行累加的时候,可能每个分布式节点都有一个实例,在最后Driver端进行一次合并,把所有的实例的内容合并起来
   override def merge(other: AccumulatorV2[String, Set[String]]): Unit = {
     infos ++= other.value
   }
 
-  // 返回的结果
+  // 提供给外部累加的结果
   override def value: Set[String] = {
+    //需要返回一个不可变的集合,因为不能因为外部的修改而影响自身的值
     infos.toSet
   }
 }
