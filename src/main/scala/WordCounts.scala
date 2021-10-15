@@ -65,7 +65,7 @@ object WordCounts {
 
     //    =====================  JSON文件读取处理  =========================
 
-    // 1.json ==> rdd[T]
+    // 1.json ==> rdd[T] : 利用JSON-API解析成Map类型数据,再封装到样例类中
     val jsonRdd: RDD[String] = sc.textFile("src/main/resources/item.jsonl")
     // 使用Scala中有自带JSON库解析,返回对象为Some(map: Map[String, Any])
     val jsonSomeRdd: RDD[Option[Any]] = jsonRdd.map(JSON.parseFull(_))
@@ -82,7 +82,7 @@ object WordCounts {
     PayRdd.foreach(println)
 
 
-    //  2.json ==> DataFrame
+    // 2.json ==> DataFrame  :  利用sparkSQL的json方法
     spark.read.json("src/main/resources/item.jsonl")
 
 
