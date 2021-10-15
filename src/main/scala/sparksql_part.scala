@@ -1,7 +1,7 @@
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession}
 
 /*
  * 
@@ -74,7 +74,7 @@ object sparksql_part {
 
 
 
-    // ----------------   写入外部数据源  ------------------------
+    // ----------------   写入数据  ------------------------
 
     // 读写模式:
     // SaveMode.Overwrite: 覆盖写入
@@ -84,7 +84,8 @@ object sparksql_part {
 
 
     // 1.format+save方式
-    df1.write
+    df1.repartition(1) // 当底层多文件时,重新分区只输出1个文件
+      .write
       .mode("error")
       .format("json")
       .save("./文件路径")
@@ -96,14 +97,21 @@ object sparksql_part {
       .mode(saveMode = "error")
       // 外部参数
       .option("encoding", "UTF-8")
-      // 文件分区
+      // 文件夹分区操作,分区字段被指定后,再也不出现在数据中
       .partitionBy(colNames = "year", "month")
-      // 文件分桶
-      .bucketBy(numBuckets = 12, colName = "month")
-      // 列排序
-      .sortBy(colName = "month")
       // 存储路径
       .json(path = "./文件路径")
+
+
+    // 3.写入表
+    df2.write
+      .mode(SaveMode.Overwrite)
+      // 文件夹分区操作
+      .partitionBy(colNames = "year", "month")
+      // 文件分桶+排序的组合操作,只能在saveAsTable中使用
+      .bucketBy(numBuckets = 12, colName = "month")
+      .sortBy(colName = "month")
+      .saveAsTable("表名")
 
 
   }

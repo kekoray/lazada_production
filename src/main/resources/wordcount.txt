@@ -1,4 +1,7 @@
-hadoop spark abd hive hadoop spark abd hive
-hadoop spark abd hive hive hive
-hadoop
-hadoop
+hadoop hadoop
+spark spark
+spark spark spark spark spark spark spark spark spark spark spark spark spark
+app INFO INFO INFO INFO INFO
+app INFO INFO INFO
+BlockManagerMaster BlockManagerMaster
+RandomBlockReplicationPolicy
