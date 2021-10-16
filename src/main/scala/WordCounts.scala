@@ -29,9 +29,15 @@ object WordCounts {
     //    sc.setLogLevel("WARN")
 
     val spark: SparkSession = new SparkSession.Builder()
+      // hive配置
+//      .config("spark.sql.warehouse.dir", "hdfs://cdh1:8020/user/hive/warehouse")
+//      .config("hive.metastore.uris", "thrift://cdh1:9083")
       .appName("wordCount")
+      // 支持hive操作
+//      .enableHiveSupport()
       .master("local[*]")
       .getOrCreate()
+
     val sc: SparkContext = spark.sparkContext
     import spark.implicits._
     //    val source: RDD[String] = sc.textFile("src/main/resources/wordcount.txt")
@@ -63,27 +69,45 @@ object WordCounts {
     //  读取jsonl文件
     //    val dataFrame: DataFrame = spark.read.json("src/main/resources/item.jsonl")
 
-    //    =====================  JSON文件读取处理  =========================
+//    //    =====================  JSON文件读取处理  =========================
+//
+//    // 1.json ==> rdd[T] : 利用JSON-API解析成Map类型数据,再封装到样例类中
+//    val jsonRdd: RDD[String] = sc.textFile("src/main/resources/item.jsonl")
+//    // 使用Scala中有自带JSON库解析,返回对象为Some(map: Map[String, Any])
+//    val jsonSomeRdd: RDD[Option[Any]] = jsonRdd.map(JSON.parseFull(_))
+//    // 将数据转换为Map类型
+//    val jsonMap: RDD[Map[String, Any]] = jsonSomeRdd.map(
+//      r => r match {
+//        case Some(map: Map[String, Any]) => map
+//        case _ => null
+//      })
+//    // 将数据封装到样例类中
+//    val PayRdd: RDD[Pay] = jsonMap.map(x => Pay(x("amount").toString, x("memberType").toString, x("orderNo").toString, x("payDate").toString, x("productType").toString))
+//    val dataSet: Dataset[Pay] = PayRdd.toDS()
+//    val dataFrame: DataFrame = PayRdd.toDF("amount", "memberType", "orderNo", "payDate", "productType")
+//    PayRdd.foreach(println)
+//
+//
+//    // 2.json ==> DataFrame  :  利用sparkSQL的json方法
+//    spark.read.json("src/main/resources/item.jsonl")
 
-    // 1.json ==> rdd[T] : 利用JSON-API解析成Map类型数据,再封装到样例类中
-    val jsonRdd: RDD[String] = sc.textFile("src/main/resources/item.jsonl")
-    // 使用Scala中有自带JSON库解析,返回对象为Some(map: Map[String, Any])
-    val jsonSomeRdd: RDD[Option[Any]] = jsonRdd.map(JSON.parseFull(_))
-    // 将数据转换为Map类型
-    val jsonMap: RDD[Map[String, Any]] = jsonSomeRdd.map(
-      r => r match {
-        case Some(map: Map[String, Any]) => map
-        case _ => null
-      })
-    // 将数据封装到样例类中
-    val PayRdd: RDD[Pay] = jsonMap.map(x => Pay(x("amount").toString, x("memberType").toString, x("orderNo").toString, x("payDate").toString, x("productType").toString))
-    val dataSet: Dataset[Pay] = PayRdd.toDS()
-    val dataFrame: DataFrame = PayRdd.toDF("amount", "memberType", "orderNo", "payDate", "productType")
-    PayRdd.foreach(println)
+
+//    spark.sql("show databases").show()
+
+    val df: DataFrame = spark.read.format("jdbc")
+      .option("url", "jdbc:mysql://192.168.100.216:3306/mysql")
+      // dbtable可写表名,也可写子查询语句
+      .option("dbtable", "(select * from innodb_table_stats where sum_of_other_index_sizes > 0) as tab")
+      .option("user", "root")
+      .option("password", "123456")
+      //关闭SSL认证
+      .option("useSSL", "false")
+      .load()
+    df.show()
 
 
-    // 2.json ==> DataFrame  :  利用sparkSQL的json方法
-    spark.read.json("src/main/resources/item.jsonl")
+
+
 
 
     //    Thread.sleep(100000)
