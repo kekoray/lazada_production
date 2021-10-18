@@ -76,32 +76,41 @@ object WordCounts {
 //    // 使用Scala中有自带JSON库解析,返回对象为Some(map: Map[String, Any])
 //    val jsonSomeRdd: RDD[Option[Any]] = jsonRdd.map(JSON.parseFull(_))
 //    // 将数据转换为Map类型
-//    val jsonMap: RDD[Map[String, Any]] = jsonSomeRdd.map(
-//      r => r match {
-//        case Some(map: Map[String, Any]) => map
-//        case _ => null
-//      })
-//    // 将数据封装到样例类中
-//    val PayRdd: RDD[Pay] = jsonMap.map(x => Pay(x("amount").toString, x("memberType").toString, x("orderNo").toString, x("payDate").toString, x("productType").toString))
-//    val dataSet: Dataset[Pay] = PayRdd.toDS()
-//    val dataFrame: DataFrame = PayRdd.toDF("amount", "memberType", "orderNo", "payDate", "productType")
-//    PayRdd.foreach(println)
-//
-//
-//    // 2.json ==> DataFrame  :  利用sparkSQL的json方法
-//    spark.read.json("src/main/resources/item.jsonl")
+    //    val jsonMap: RDD[Map[String, Any]] = jsonSomeRdd.map(
+    //      r => r match {
+    //        case Some(map: Map[String, Any]) => map
+    //        case _ => null
+    //      })
+    //    // 将数据封装到样例类中
+    //    val PayRdd: RDD[Pay] = jsonMap.map(x => Pay(x("amount").toString, x("memberType").toString, x("orderNo").toString, x("payDate").toString, x("productType").toString))
+    //    val dataSet: Dataset[Pay] = PayRdd.toDS()
+    //    val dataFrame: DataFrame = PayRdd.toDF("amount", "memberType", "orderNo", "payDate", "productType")
+    //    PayRdd.foreach(println)
+    //
+    //
+    //    // 2.json ==> DataFrame  :  利用sparkSQL的json方法
+    //    spark.read.json("src/main/resources/item.jsonl")
 
 
-//    spark.sql("show databases").show()
+    //    spark.sql("show databases").show()
 
+
+    //    mysql读取
     val df: DataFrame = spark.read.format("jdbc")
       .option("url", "jdbc:mysql://192.168.100.216:3306/mysql")
       // dbtable可写表名,也可写子查询语句
       .option("dbtable", "(select * from innodb_table_stats where sum_of_other_index_sizes > 0) as tab")
       .option("user", "root")
       .option("password", "123456")
-      //关闭SSL认证
+      // 关闭SSL认证
       .option("useSSL", "false")
+      // 按照指定列进行分区,只能设置类型为数值的列
+      .option("partitionColumn", "age")
+      // 确定步长的参数,lowerBound-upperBound之间的数据均分给每一个分区,小于lowerBound的数据分给第一个分区,大于upperBound的数据分给最后一个分区
+      .option("lowerBound", 1)
+      .option("upperBound", 60)
+      // 分区数量
+      .option("numPartitions", 10)
       .load()
     df.show()
 
