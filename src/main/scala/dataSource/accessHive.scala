@@ -1,5 +1,7 @@
 package dataSource
 
+import java.time.LocalDate
+
 import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
@@ -52,7 +54,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
         |  Stored As textfile
         |  Location '/dataset/hive'
         |  Tblproperties ("orc.compress" = "SNAPPY")""".stripMargin
-    spark.sql(createSql)
+//    spark.sql(createSql)
 
 
     //======================================================================================
@@ -70,15 +72,15 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
       .schema(schema)
       .csv("src/main/resources/student.csv")
 
-    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 0")
+    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 20")
 
 
     // 隐私转换
     import org.apache.spark.sql.functions._
     import spark.implicits._
 
-    // 设置dt分区列
-    val resultDF: DataFrame = result.withColumn("dt", lit("2021-10-22"))
+    // 设置dt分区列为当前日期
+    val resultDF: DataFrame = result.withColumn("dt", lit(LocalDate.now().toString.substring(0, 10)))
     resultDF.show()
 
     /* ------------------------  1.insertInto模式  ------------------------------
@@ -88,11 +90,13 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
         B. append + insertInto : 在表末尾追加增量数据
     */
 
+
     // 开启动态分区和模式
-    spark.conf.set("hive.exec.dynamici.partition", "false")
-    spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+    //    spark.conf.set("hive.exec.dynamici.partition", "false")
+    //    spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+//    spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
     resultDF.write
-      .mode("append")
+      .mode("overwrite")
       .insertInto("spark_test.student")
 
 
