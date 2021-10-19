@@ -8,7 +8,7 @@
     <artifactId>lazada_production</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <!-- spark,hive,Scala三个版本要一致,否则会报错 ==> [Invalid method name: 'get_table_req'] -->
+    <!-- spark,hive,Scala三个版本要一致,否则操作会报错  ==> [Invalid method name: 'get_table_req'] -->
     <properties>
         <scala.version>2.11.12</scala.version>
         <spark.version>2.1.1</spark.version>
@@ -55,7 +55,7 @@
         <!--        <dependency>-->
         <!--            <groupId>org.apache.hadoop</groupId>-->
         <!--            <artifactId>hadoop-client</artifactId>-->
-        <!--            <version>2.6.0</version>-->
+        <!--            <version>2.1.1</version>-->
         <!--        </dependency>-->
 
         <dependency>
