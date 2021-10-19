@@ -1,5 +1,6 @@
 package dataSource
 
+import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
 
@@ -30,7 +31,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
     //===========================   查询操作   =============================================
     //======================================================================================
     spark.sql("show databases").show()
-    spark.sql("select * from student").show()
+    //    spark.sql("select * from student").show()
 
 
     //======================================================================================
@@ -69,20 +70,30 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
       .schema(schema)
       .csv("src/main/resources/student.csv")
 
-    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 18")
+    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 0")
+
+
+    // 隐私转换
+    import org.apache.spark.sql.functions._
+    import spark.implicits._
+
+    // 设置dt分区列
+    val resultDF: DataFrame = result.withColumn("dt", lit("2021-10-22"))
+    resultDF.show()
 
     /* ------------------------  1.insertInto模式  ------------------------------
-      按照数据位置顺序插入数据,忽略列名,前提要设置允许所有字段使用动态分区 [hive.exec.dynamic.partition.mode=nonstrict]
+      按照数据位置顺序插入数据,忽略列名,前提要开启动态分区和模式
+      若操作的是分区表,不用指定partitionBy(),会自动获取表结构的分区字段,从而插入对应分区的数据
         A. overwrite + insertInto : 只覆盖相同分区的数据
         B. append + insertInto : 在表末尾追加增量数据
     */
 
-    // 设置允许所有字段使用动态分区
+    // 开启动态分区和模式
+    spark.conf.set("hive.exec.dynamici.partition", "false")
     spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
-    result.write
-      .mode("overwrite")
-      .insertInto("spark_test.student3")
-
+    resultDF.write
+      .mode("append")
+      .insertInto("spark_test.student")
 
 
     /* ------------------------  2.saveAsTable模式  ------------------------------
@@ -101,9 +112,10 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
         2.表不存在,自动建表并插入数据
     */
 
-    result.write
-      .mode("error")
-      .saveAsTable("spark_test.student2")
+//    resultDF.write
+//      .mode("append")
+//      .partitionBy("dt")
+//      .saveAsTable("spark_test.student")
 
     spark.stop()
 
