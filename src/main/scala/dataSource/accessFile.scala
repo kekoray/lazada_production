@@ -23,12 +23,12 @@ import scala.util.parsing.json.JSON
 
   def main(args: Array[String]): Unit = {
 
+    val spark: SparkSession = SparkSession.builder().appName("accessFile").master("local[*]").getOrCreate()
 
 
     //==========================================================================================
     //===========================   读取JSON文件   =============================================
     //==========================================================================================
-    val spark: SparkSession = SparkSession.builder().appName("accessFile").master("local[*]").getOrCreate()
 
     // ------------  1.json ==> rdd[T]:利用JSON-API解析成Map类型数据,再封装到样例类中  ---------------
     val sc = spark.sparkContext
@@ -57,8 +57,9 @@ import scala.util.parsing.json.JSON
     //===========================   写入JSON文件   =============================================
     //==========================================================================================
 
-    // 当底层多文件时,repartition重新分区只输出1个文件
-    jsonDF.repartition(1).write.json("src/main/resources/output/json")
+    // 当底层有多个文件时,repartition重新分区只输出1个文件
+    jsonDF.repartition(1)
+      .write.json("src/main/resources/output/json")
 
 
   }
