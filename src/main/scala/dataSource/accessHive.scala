@@ -72,7 +72,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
       .schema(schema)
       .csv("src/main/resources/student.csv")
 
-    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 2")
+    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 20")
 
 
     // 隐私转换
