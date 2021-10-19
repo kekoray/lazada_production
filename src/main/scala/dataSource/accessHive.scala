@@ -72,7 +72,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
       .schema(schema)
       .csv("src/main/resources/student.csv")
 
-    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 20")
+    val result: Dataset[Row] = csvDF.select("name", "age", "gpa").where("age > 2")
 
 
     // 隐私转换
@@ -80,7 +80,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
     import spark.implicits._
 
     // 设置dt分区列为当前日期
-    val resultDF: DataFrame = result.withColumn("dt", lit(LocalDate.now().toString.substring(0, 10)))
+    val resultDF: DataFrame = result.withColumn("dt", lit(LocalDate.now().toString.substring(0, 7)))
     resultDF.show()
 
     /* ------------------------  1.insertInto模式  ------------------------------
@@ -93,11 +93,12 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
 
     // 开启动态分区和模式
     //    spark.conf.set("hive.exec.dynamici.partition", "false")
-    //    spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+//        spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
 //    spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
-    resultDF.write
-      .mode("overwrite")
-      .insertInto("spark_test.student")
+//    resultDF.write
+//      .mode("overwrite")
+////      .option("partitionOverwriteMode", "DYNAMIC")
+//      .insertInto("spark_test.student")
 
 
     /* ------------------------  2.saveAsTable模式  ------------------------------
@@ -116,10 +117,10 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
         2.表不存在,自动建表并插入数据
     */
 
-//    resultDF.write
-//      .mode("append")
-//      .partitionBy("dt")
-//      .saveAsTable("spark_test.student")
+    resultDF.write
+      .mode("append")
+      .partitionBy("dt")
+      .saveAsTable("spark_test.student")
 
     spark.stop()
 
