@@ -1,6 +1,6 @@
+package nk_part
+
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark.util.AccumulatorV2
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -10,7 +10,7 @@ import scala.collection.mutable
  * 
  * @ProjectName: lazada_production  
  * @program:    
- * @FileName: rdd_part 
+ * @FileName: nk_part.rdd_part
  * @description:  TODO   
  * @version: 1.0   
  * *
@@ -22,7 +22,7 @@ import scala.collection.mutable
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
-    val conf = new SparkConf().setAppName("rdd_part").setMaster("local[2]")
+    val conf = new SparkConf().setAppName("nk_part.rdd_part").setMaster("local[2]")
     val sc = new SparkContext(conf)
 
     //

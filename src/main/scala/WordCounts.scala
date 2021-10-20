@@ -86,21 +86,37 @@ object WordCounts {
     val dataSet: Dataset[Pay] = PayRdd.toDS()
 
 
-    //    =====================  column对象  =========================
 
-    // ---------------  创建方式  -------------------
-    // 隐私转换
+
+
+
+
+
+
+
+
+    // =====================  column对象  =========================
+
+    // ---------------  column创建方式  -------------------
     import org.apache.spark.sql.functions._
     import spark.implicits._
-    dataSet.select('name, $"name", col("name"), column("name")).where($"age" > 0).where("name is null")
+
+    // 创建Column对象
+    dataSet
+      .select('name) // 常用
+      .select($"name")
+      .select(col("name"))
+      .select(column("name"))
+      .where('age > 0)
+      .where("age > 0")
+
     // 创建关联此Dataset的Column对象
     dataSet.col("addCol")
     dataSet.apply("addCol2")
     dataSet("addCol2")
 
 
-
-    // ---------------  常用操作  -----------------
+    // ---------------  column常用操作  -----------------
     // 1.类型转换
     dataSet.select('age.as[String])
 
