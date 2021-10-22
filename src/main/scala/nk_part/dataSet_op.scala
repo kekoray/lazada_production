@@ -1,6 +1,6 @@
 package nk_part
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 /*
  * 
@@ -16,25 +16,39 @@ import org.apache.spark.sql.SparkSession
  */ object dataSet_op {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder().appName("dataSet_op").master("local[*]").getOrCreate()
-    import spark._
 
 
     //===================================================================================
     //===========================   Dataset的常用操作   ==================================
     //===================================================================================
-
+    import spark.implicits._
 
     //===============  Dataset的有类型操作   ========================
     //不能直接拿到列进行操作,需要通过.的形式获取
 
     /*
     1.转换
-        flatMap        处理对象是数据集中的每个元素
-        map            处理对象是数据集中的每个元素
+        flatMap        处理对象是数据集中的每个元素,将一条数据转为一个数组
+        map            处理对象是数据集中的每个元素,将一条数据转为另一种形式
         mapPartitions  处理对象是数据集中每个分区的iter迭代器
         transform      处理对象是整个数据集 (Dataset) ;   transform 可以直接拿到Dataset进行操作
         as             作用是将弱类型的 Dataset 转为强类型的 Dataset ;  转成Dataset方便于转换操作
+    */
 
+    Seq("hello world", "hello pc").toDS().flatMap(_.split(" ")).show
+    Seq(1, 2, 3, 4).toDS().map(_ * 10).show
+    Seq(1, 2, 3, 4).toDS().mapPartitions(iter => iter.map(_ * 10))
+
+
+
+
+
+
+
+
+
+
+    /*
      2.过滤
         filter  按照条件过滤数据集
 
@@ -72,59 +86,69 @@ import org.apache.spark.sql.SparkSession
     import org.apache.spark.sql.functions._
 
     /*
-1.查询
-select      用于选择某些列出现在结果集中
-selectExpr  以SQL表达式的形式选择某些列出现在结果集中
+    1.选择
+        select      用于选择某些列出现在结果集中
+        selectExpr  使用expr函数的形式选择某些列出现在结果集中
+
+    2.列操作
+        withColumn         创建一个新的列或者修改原来的列
+        withColumnRenamed  修改列名
+
+    3.剪除
+        drop  删掉某个列
+
+    4.聚合
+        groupBy   按照给定的行进行分组
+
 
 
 
      */
 
 
-
-
-
-    //===============  Column对象   ================================
-
-    // ---------------  column创建方式  -------------------
-    import org.apache.spark.sql.functions._
-    import spark.implicits._
-
-    // 创建Column对象
-    dataSet
-      .select('name) // 常用
-      .select($"name")
-      .select(col("name"))
-      .select(column("name"))
-      .where('age > 0)
-      .where("age > 0")
-
-    // 创建关联此Dataset的Column对象
-    dataSet.col("addCol")
-    dataSet.apply("addCol2")
-    dataSet("addCol2")
-
-
-    // ---------------  column常用操作  -----------------
-    // 1.类型转换
-    dataSet.select('age.as[String])
-
-    // 2.创建别名
-    dataSet.select('name.as("other_name"))
-
-    // 3.添加列
-    dataSet.withColumn("double_age", 'age * 2)
-
-    // 4.模糊查找
-    dataSet.select('name.like("apple"))
-
-    // 5.是否存在指定列
-    dataSet.select('name.isin("a", "b"))
-
-    // 6.正反排序
-    dataSet.sort('age.asc)
-    dataSet.sort('age.desc)
-
+    //
+    //
+    //    //===============  Column对象   ================================
+    //
+    //    // ---------------  column创建方式  -------------------
+    //    import org.apache.spark.sql.functions._
+    //    import spark.implicits._
+    //
+    //    // 创建Column对象
+    //    dataSet
+    //      .select('name) // 常用
+    //      .select($"name")
+    //      .select(col("name"))
+    //      .select(column("name"))
+    //      .where('age > 0)
+    //      .where("age > 0")
+    //
+    //    // 创建关联此Dataset的Column对象
+    //    dataSet.col("addCol")
+    //    dataSet.apply("addCol2")
+    //    dataSet("addCol2")
+    //
+    //
+    //    // ---------------  column常用操作  -----------------
+    //    // 1.类型转换
+    //    dataSet.select('age.as[String])
+    //
+    //    // 2.创建别名
+    //    dataSet.select('name.as("other_name"))
+    //
+    //    // 3.添加列
+    //    dataSet.withColumn("double_age", 'age * 2)
+    //
+    //    // 4.模糊查找
+    //    dataSet.select('name.like("apple"))
+    //
+    //    // 5.是否存在指定列
+    //    dataSet.select('name.isin("a", "b"))
+    //
+    //    // 6.正反排序
+    //    dataSet.sort('age.asc)
+    //    dataSet.sort('age.desc)
+    //
 
   }
 
