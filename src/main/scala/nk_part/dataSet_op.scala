@@ -134,49 +134,52 @@ import org.apache.spark.sql.{Dataset, KeyValueGroupedDataset, SparkSession}
 
 
 
-    //
-    //
-    //    //===============  Column对象   ================================
-    //
-    //    // ---------------  column创建方式  -------------------
-    //    import org.apache.spark.sql.functions._
-    //    import spark.implicits._
-    //
-    //    // 创建Column对象
-    //    dataSet
-    //      .select('name) // 常用
-    //      .select($"name")
-    //      .select(col("name"))
-    //      .select(column("name"))
-    //      .where('age > 0)
-    //      .where("age > 0")
-    //
-    //    // 创建关联此Dataset的Column对象
-    //    dataSet.col("addCol")
-    //    dataSet.apply("addCol2")
-    //    dataSet("addCol2")
-    //
-    //
-    //    // ---------------  column常用操作  -----------------
-    //    // 1.类型转换
-    //    dataSet.select('age.as[String])
-    //
-    //    // 2.创建别名
-    //    dataSet.select('name.as("other_name"))
-    //
-    //    // 3.添加列
-    //    dataSet.withColumn("double_age", 'age * 2)
-    //
-    //    // 4.模糊查找
-    //    dataSet.select('name.like("apple"))
-    //
-    //    // 5.是否存在指定列
-    //    dataSet.select('name.isin("a", "b"))
-    //
-    //    // 6.正反排序
-    //    dataSet.sort('age.asc)
-    //    dataSet.sort('age.desc)
-    //
+    //===============  Column对象  ================================
+
+    // ---------------  column创建方式  -------------------
+    import org.apache.spark.sql.functions._ // 作用于col,column
+    import spark.implicits._ // 作用于符号',$
+
+    val dataSet: Dataset[Person] = Seq(Person("zhangsan", 12), Person("zhangsan", 8), Person("lisi", 15)).toDS()
+
+    // 创建Column对象
+    dataSet
+      .select('name) // 常用
+      .select($"name")
+      .select(col("name"))
+      .select(column("name"))
+      .where('age > 0)
+      .where("age > 0")
+
+    // 创建关联此Dataset的Column对象
+    dataSet.col("addCol")
+    dataSet.apply("addCol2")
+    dataSet("addCol2")
+
+
+    // ---------------  column常用操作  -----------------
+    // 1.类型转换
+    dataSet.select('age.as[String])
+
+    // 2.创建别名
+    dataSet.select('name.as("other_name"))
+
+    // 3.添加列
+    dataSet.withColumn("double_age", 'age * 2)
+
+    // 4.模糊查找
+    dataSet.select('name.like("apple"))
+
+    // 5.是否存在指定列
+    dataSet.select('name.isin("a", "b"))
+
+    // 6.正反排序
+    dataSet.sort('age.asc)
+    dataSet.sort('age.desc)
+
+
+
+
 
   }
 
