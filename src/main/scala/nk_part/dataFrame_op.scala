@@ -104,9 +104,12 @@ import org.junit.Test
          cube :            对指定表达式集的每个可能组合创建分组集进行分组操作,最后再进行全表聚合,    [ cube(A,B) 等价于==> group by A union group by B union group by A,B union 全表聚合]
      */
 
-    println("========================" * 10)
+    // grouping sets操作
     salesDF.createOrReplaceTempView("sales")
-    spark.sql("""select city,year,sum(amount) as sum_amount from sales group by city,year grouping sets((city,year),()) order by city desc,year desc""").show()
+    spark.sql(
+      """select city,year,sum(amount) as sum_amount from sales
+        |group by city,year grouping sets((city,year),())
+        |order by city desc,year desc""".stripMargin).show()
     /*+---------+----+----------+
       |     city|year|sum_amount|
       +---------+----+----------+
@@ -118,10 +121,17 @@ import org.junit.Test
       |     null|null|       550|
       +---------+----+----------+*/
 
+    // rollup操作
     salesDF.rollup('city, 'year)
       .agg(sum("amount") as "sum_amount")
       .sort('city asc_nulls_last, 'year desc_nulls_last)
       .show()
+
+    spark.sql(
+      """select city,year,sum(amount) as sum_amount from sales
+        |group by city,year with rollup
+        |order by city desc,year desc""".stripMargin).show()
+
     /*+---------+----+----------+
       |     city|year|sum_amount|
       +---------+----+----------+
@@ -136,10 +146,17 @@ import org.junit.Test
       |     null|null|       550|
       +---------+----+----------+*/
 
+    // cube操作
     salesDF.cube('city, 'year)
       .agg(sum("amount") as "sum_amount")
       .sort('city asc_nulls_last, 'year desc_nulls_last)
       .show()
+
+    spark.sql(
+      """select city,year,sum(amount) as sum_amount from sales
+        |group by city,year with cube
+        |order by city desc,year desc""".stripMargin).show()
+
     /*+---------+----+----------+
       |     city|year|sum_amount|
       +---------+----+----------+
