@@ -3,6 +3,7 @@ package dataSource
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.expressions.{UserDefinedFunction, Window, WindowSpec}
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, SaveMode, SparkSession}
 
@@ -361,7 +362,58 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     ).collect().foreach(println)
 
 
+    // =======================  DataFrame-函数操作  =======================
 
+    val source: DataFrame = Seq(
+      ("Thin", "Cell phone", 6000),
+      ("Normal", "Tablet", 1500),
+      ("Mini", "Tablet", 5500),
+      ("Ultra thin", "Cell phone", 5000),
+      ("Very thin", "Cell phone", 6000),
+      ("Big", "Tablet", 2500),
+      ("Bendable", "Cell phone", 3000),
+      ("Foldable", "Cell phone", 3000),
+      ("Pro", "Tablet", 4500),
+      ("Pro2", "Tablet", 6500))
+      .toDF("product", "category", "revenue")
+
+
+    // ---------------------  1.UDF函数  --------------------
+
+    // A.命令式注册UDF函数
+    def toStr(revenue: Long): String = "$" + revenue // 1.定义方法
+    val toStrUDF: UserDefinedFunction = udf(toStr _) // 2.注册UDF函数
+    source.select(toStrUDF('revenue)).show()
+
+    // B.sql方式注册UDF函数
+    spark.udf.register("utf_func", (x: Int) => "$" + x)
+    source.createOrReplaceTempView("table")
+    spark.sql("select udf_str(revenue) from table").show()
+
+
+    // ---------------------  2.窗口函数  --------------------
+    /*
+      1.排名函数
+            row_number     不考虑数据重复性,依次连续打上标号 ==> [1 2 3 4]
+            dense_rank     考虑数据重复性,重复的数据不会挤占后续的标号,是连续的 ==> [1 2 2 3]
+            rank           排名函数,考虑数据重复性,重复的数据会挤占后续的标号 ==> [1 1 3 4]
+
+      2.分析函数
+            first          获取这个组第一条数据
+            last           获取这个组最后一条数据
+            lag            lag(field,n)获取当前数据的field列向前n条数据
+            lead           lead(field,n)获取当前数据的field列向后n条数据
+
+      3.聚合函数
+            sum/avg..      所有的functions中的聚合函数都支持
+     */
+
+    // 1.定义窗口规则
+    val window: WindowSpec = Window.partitionBy('category).orderBy('revenue.desc)
+
+    // 2.定义窗口函数
+    source.select('product, 'category, 'revenue, row_number() over window as "num").show()
+    source.withColumn("num", row_number() over window).show()
 
 
 
