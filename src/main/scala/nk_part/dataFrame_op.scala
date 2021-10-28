@@ -185,8 +185,6 @@ import org.junit.Test
       +---------+----+----------+*/
 
 
-
-
     //  ========================  join连接操作  =======================================
     /*
     join优化:
@@ -195,8 +193,10 @@ import org.junit.Test
          3.Sort Merge Join ： 适合两张较大的表之间进行join
     */
 
-    val person: DataFrame = Seq((0, "Lucy", 0), (1, "Lily", 0), (2, "Tim", 2), (3, "Danial", 0)).toDF("id", "name", "cityId")
-    val cities: DataFrame = Seq((0, "Beijing"), (1, "Shanghai"), (2, "Guangzhou")).toDF("id", "name")
+    val person: DataFrame = Seq((0, "Lucy", 0), (1, "Lily", 0), (2, "Tim", 2), (3, "Danial", 0))
+      .toDF("id", "name", "cityId")
+    val cities: DataFrame = Seq((0, "Beijing"), (1, "Shanghai"), (2, "Guangzhou"))
+      .toDF("id", "name")
 
     // join
     person.join(cities, person.col("id") === cities.col("id"))

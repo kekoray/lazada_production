@@ -1,6 +1,7 @@
 package dataSource
 
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, SaveMode, SparkSession}
@@ -45,13 +46,13 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     val SeqDF: DataFrame = Seq(("tom", 11), ("tony", 33)).toDF("name", "age")
 
     // 样例类 => df  (常用)
-    val person: Seq[People] = Seq(People("tom", 11), People("tony", 33))
-    val personDF: DataFrame = person.toDF()
+    val people: Seq[People] = Seq(People("tom", 11), People("tony", 33))
+    val personDF: DataFrame = people.toDF()
 
 
     // ---------------------  2.通过createDataFrame创建  --------------------
     // 样例类 => df
-    val df1: DataFrame = spark.createDataFrame(person)
+    val df1: DataFrame = spark.createDataFrame(people)
 
     // rowRDD+schema => df
     val rdd: RDD[Row] = dataRdd.map(x => Row(x._1, x._2))
@@ -169,45 +170,187 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
 
     // =======================  DataFrame-多维分组聚合操作  =======================
 
-    // ---------------------  1.分组操作方式  --------------------
-    /*
-      多维分组聚合操作
-          group by :        对查询的结果进行分组
-          grouping sets :   对分组集中指定的组表达式的每个子集执行分组操作,                      [ group by A,B grouping sets((A,B),()) 等价于==>  group by A,B union 全表聚合 ]
-          rollup :          对指定表达式集滚动创建分组集进行分组操作,最后再进行全表聚合,           [ rollup(A,B) 等价于==> group by A union group by A,B union 全表聚合]
-          cube :            对指定表达式集的每个可能组合创建分组集进行分组操作,最后再进行全表聚合,   [ cube(A,B) 等价于==> group by A union group by B union group by A,B union 全表聚合]
-
-
-     */
-
-
-    // ---------------------  2.分组后聚合操作方式  --------------------
+    // ---------------------  1.聚合操作  --------------------
     /*
       分组后聚合操作方式
-        1.使用agg配合sql.functions函数进行聚合,这种方式能一次求多个聚合值,比较方便,常用这个!!
-        2.使用GroupedDataset的API进行聚合,这种方式只能求一类聚合的值,不好用
+          A.使用agg配合sql.functions函数进行聚合,这种方式能一次求多个聚合值,比较方便,常用这个!!
+          B.使用GroupedDataset的API进行聚合,这种方式只能求一类聚合的值,不好用
      */
 
-    val salesDF: DataFrame = Seq(
-      ("Beijing", 2016, 100),
-      ("Beijing", 2017, 200),
-      ("Shanghai", 2015, 50),
-      ("Shanghai", 2016, 150),
-      ("Guangzhou", 2017, 50)
-    ).toDF("city", "year", "amount")
+    val salesDF: DataFrame = Seq(("Beijing", 2016, 100), ("Beijing", 2017, 200), ("Shanghai", 2015, 50), ("Shanghai", 2016, 150), ("Guangzhou", 2017, 50))
+      .toDF("city", "year", "amount")
 
     val groupedDF: RelationalGroupedDataset = salesDF.groupBy('city, 'year)
 
-    // 常用,能一次求多个聚合值,还能指定别名
+    // A.能一次求多个聚合值,还能指定别名  (常用)
     groupedDF
       .agg(sum("amount") as "sum_amount", avg("amount") as "avg_amount")
       .select('city, 'sum_amount, 'avg_amount)
       .show()
 
-    // 只能求一类的聚合值,且不能指定别名
+    // B.只能求一类的聚合值,且不能指定别名
     groupedDF
       .sum("amount")
       .show()
+
+
+
+    // ---------------------  2.分组方式  --------------------
+    /*
+      多维分组聚合操作
+          group by :       对查询的结果进行分组
+          grouping sets :  对分组集中指定的组表达式的每个子集执行分组操作,                      [ group by A,B grouping sets((A,B),()) 等价于==>  group by A,B union 全表聚合 ]
+          rollup :         对指定表达式集滚动创建分组集进行分组操作,最后再进行全表聚合,           [ rollup(A,B) 等价于==> group by A union group by A,B union 全表聚合]
+          cube :           对指定表达式集的每个可能组合创建分组集进行分组操作,最后再进行全表聚合,   [ cube(A,B) 等价于==> group by A union group by B union group by A,B union 全表聚合]
+     */
+
+    // grouping sets操作
+    salesDF.createOrReplaceTempView("sales")
+    spark.sql(
+      """select city,year,sum(amount) as sum_amount from sales
+        |group by city,year grouping sets((city,year),())
+        |order by city desc,year desc""".stripMargin).show()
+    /*+---------+----+----------+
+      |     city|year|sum_amount|
+      +---------+----+----------+
+      | Shanghai|2016|       150|
+      | Shanghai|2015|        50|
+      |Guangzhou|2017|        50|
+      |  Beijing|2017|       200|
+      |  Beijing|2016|       100|
+      |     null|null|       550|
+      +---------+----+----------+*/
+
+
+    // rollup操作
+    salesDF.rollup('city, 'year)
+      .agg(sum("amount") as "sum_amount")
+      .sort('city asc_nulls_last, 'year desc_nulls_last)
+      .show()
+
+    spark.sql(
+      """select city,year,sum(amount) as sum_amount from sales
+        |group by city,year with rollup
+        |order by city desc,year desc""".stripMargin).show()
+
+    /*+---------+----+----------+
+      |     city|year|sum_amount|
+      +---------+----+----------+
+      |  Beijing|2017|       200|
+      |  Beijing|2016|       100|
+      |  Beijing|null|       300|
+      |Guangzhou|2017|        50|
+      |Guangzhou|null|        50|
+      | Shanghai|2016|       150|
+      | Shanghai|2015|        50|
+      | Shanghai|null|       200|
+      |     null|null|       550|
+      +---------+----+----------+*/
+
+
+    // cube操作
+    salesDF.cube('city, 'year)
+      .agg(sum("amount") as "sum_amount")
+      .sort('city asc_nulls_last, 'year desc_nulls_last)
+      .show()
+
+    spark.sql(
+      """select city,year,sum(amount) as sum_amount from sales
+        |group by city,year with cube
+        |order by city desc,year desc""".stripMargin).show()
+
+    /*+---------+----+----------+
+      |     city|year|sum_amount|
+      +---------+----+----------+
+      |  Beijing|2017|       200|
+      |  Beijing|2016|       100|
+      |  Beijing|null|       300|
+      |Guangzhou|2017|        50|
+      |Guangzhou|null|        50|
+      | Shanghai|2016|       150|
+      | Shanghai|2015|        50|
+      | Shanghai|null|       200|
+      |     null|2017|       250|
+      |     null|2016|       250|
+      |     null|2015|        50|
+      |     null|null|       550|
+      +---------+----+----------+*/
+
+
+    // =======================  DataFrame-join连接操作  =======================
+    /*
+      join优化:
+           1.Broadcast Hash Join ： 广播Join,或者叫Map端Join,适合一张较小的表(默认10M)和一张大表进行join
+           2.Shuffle Hash Join :   适合一张小表和一张大表进行join，或者是两张小表之间的join
+           3.Sort Merge Join ：    适合两张较大的表之间进行join
+    */
+
+    val person: DataFrame = Seq((0, "Lucy", 0), (1, "Lily", 0), (2, "Tim", 2), (3, "Danial", 0))
+      .toDF("id", "name", "cityId")
+    val cities: DataFrame = Seq((0, "Beijing"), (1, "Shanghai"), (2, "Guangzhou"))
+      .toDF("id", "name")
+
+    // join
+    person.join(cities, person.col("id") === cities.col("id"))
+      .select(person.col("id"), cities.col("name") as "city")
+      .show()
+
+    // cross
+    person.crossJoin(cities)
+      .where(person.col("id") === cities.col("id"))
+      .show()
+
+    // inner,left,left_outer,left_anti,left_semi,right,right_outer,outer,full,full_outer
+    // left_anti操作是输出'左表独有的数据',如同 [left join + where t2.col is null] 的操作
+    person.join(cities, person.col("id") === cities.col("id"), joinType = "inner")
+    person.join(cities, person.col("id") === cities.col("id"), joinType = "left_anti")
+    person.join(cities, person.col("id") === cities.col("id"), joinType = "left").where(cities.col("id") isNull)
+
+
+    // ----------------  1.广播Join操作  -------------
+    /*
+    将小数据集分发给每一个Executor,让较大的数据集在Map端直接获取小数据集进行Join,这种方式是不需要进行Shuffle的,所以称之为Map端Join,或者广播join
+    spark会自动实现Map端Join,依赖spark.sql.autoBroadcastJoinThreshold=10M(默认)参数,当数据集小于这个参数的大小时,会自动进行Map端Join操作
+   */
+
+    // 默认开启广播Join
+    println(spark.conf.get("spark.sql.autoBroadcastJoinThreshold").toInt / 1024 / 1024)
+    println(person.crossJoin(cities).queryExecution.sparkPlan.numberedTreeString)
+    /*    00 BroadcastNestedLoopJoin BuildRight, Cross
+          01 :- LocalTableScan [id#152, name#153, cityId#154]
+          02 +- LocalTableScan [id#164, name#165  */
+
+    // 关闭广播Join操作
+    spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)
+    println(person.crossJoin(cities).queryExecution.sparkPlan.numberedTreeString)
+    /*   00 CartesianProduct
+         01 :- LocalTableScan [id#152, name#153, cityId#154]
+         02 +- LocalTableScan [id#164, name#165]  */
+
+    // 使用函数强制开启广播Join
+    println(person.crossJoin(broadcast(cities)).queryExecution.sparkPlan.numberedTreeString)
+
+    // sql版本的的广播Join,这是Hive1.6之前的写法,之后的版本自动识别小表
+    // spark.sql("""select /*+ MAPJOIN (rt) */ * from person cross join cities rt""")
+
+    // sparkRDD版本的广播Join
+    val personRDD: RDD[(Int, String, Int)] = spark.sparkContext.parallelize(Seq((0, "Lucy", 0), (1, "Lily", 0), (2, "Tim", 2), (3, "Danial", 3)))
+    val citiesRDD: RDD[(Int, String)] = spark.sparkContext.parallelize(Seq((0, "Beijing"), (1, "Shanghai"), (2, "Guangzhou")))
+    val citiesBroadcast: Broadcast[collection.Map[Int, String]] = spark.sparkContext.broadcast(citiesRDD.collectAsMap())
+    personRDD.mapPartitions(
+      iter => {
+        val value = citiesBroadcast.value
+        val result = for (x <- iter // 1.iter先赋值给x
+                          if value.contains(x._3) // 2.再判断value中是否有x
+                          )
+          yield (x._1, x._2, value(x._3)) // 3.使用列表生成式yield生成列表
+        result
+      }
+    ).collect().foreach(println)
+
+
+
+
 
 
 
