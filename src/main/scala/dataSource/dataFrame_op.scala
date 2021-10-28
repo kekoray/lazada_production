@@ -3,7 +3,7 @@ package dataSource
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, SaveMode, SparkSession}
 
 /*
@@ -71,11 +71,11 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
 
     // =======================  DataFrame处理操作  =======================
     // A.命令式API操作
-    df1.select().show()
+    df1.select().where("age > 18")
 
     // B.SQL操作 -- 注册一张临时表,然后用SQL操作这张临时表
     df1.createOrReplaceTempView("tmp_table")
-    spark.sql("""select * from tmp_table""").show()
+    spark.sql("""select * from tmp_table""")
 
 
 
@@ -133,8 +133,9 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
           2. "Null", "NA", " "等为字符串类型的值,一般使用replace处理
      */
 
-    val df: DataFrame = List((1, "kk", 18.0), (2, "", 25.0), (3, "UNKNOWN", Double.NaN), (4, "null", 30.0))
+    val df: DataFrame = List((1, "kk", 18.0), (2, "", 25.0), (3, "UNKNOWN", Double.NaN), (4, "null", "NA"))
       .toDF("id", "name", "age")
+    df.show()
 
 
     // ---------------------  1.删除操作  --------------------
@@ -144,28 +145,44 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
           all ==> 处理的是当某行数据所有值为空
      */
 
-    //1.默认为any,当某一列有NaN时就删除该行
-    df.na.drop().show()
-    df.na.drop("any").show()
-    df.na.drop("any", List("id", "name")).show()
+    // A.默认为any,当某一列有NaN时就删除该行
+    df.na.drop()
+    df.na.drop("any")
+    df.na.drop("any", List("id", "name"))
 
-    //2.all,所有的列都是NaN时就删除该行
-    df.na.drop("all").show()
+    // B.all,所有的列都是NaN时就删除该行
+    df.na.drop("all")
 
 
     // ---------------------  2.填充操作  --------------------
     // 对包含null和NaN的所有列数据进行默认值填充,可以指定列;
-    df.na.fill(0).show()
-    df.na.fill(0, List("id", "name")).show()
+    df.na.fill(0)
+    df.na.fill(0, List("id", "name"))
 
 
     // ---------------------  3.替换操作  --------------------
     // 将包含'字符串类型的缺省值'的所有列数据替换成其它值,被替换的值和新值必须是同类型,可以指定列;
-    //1.将“名称”列中所有出现的"UNKNOWN"替换为"unnamed"
-    df.na.replace("name", Map("UNKNOWN" -> "unnamed")).show()
+    // A.将“名称”列中所有出现的"UNKNOWN"替换为"unnamed"
+    df.na.replace("name", Map("UNKNOWN" -> "unnamed"))
 
-    //2.在所有字符串列中将所有出现的"UNKNOWN"替换为"unnamed"
-    df.na.replace("*", Map("UNKNOWN" -> "unnamed")).show()
+    // B.在所有字符串列中将所有出现的"UNKNOWN"替换为"unnamed"
+    df.na.replace("*", Map("UNKNOWN" -> "unnamed"))
+
+
+    // ---------------------  4.SQL操作  --------------------
+    // A.使用函数直接转换非法的字符串,再用drop删除
+    df.select('id, 'name,
+      when('name === "NA", Double.NaN) // when+otherwise类似case when的效果
+        .otherwise('age cast (DoubleType))
+        .as("age"))
+      .na.drop("any")
+      .show()
+
+    // B.使用where直接过滤  (常用)
+    df.select('id, 'name, 'age)
+      .where('name =!= "NA")
+      .show
+
 
 
     // =======================  DataFrame-多维分组聚合操作  =======================
@@ -186,12 +203,11 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     groupedDF
       .agg(sum("amount") as "sum_amount", avg("amount") as "avg_amount")
       .select('city, 'sum_amount, 'avg_amount)
-      .show()
+
 
     // B.只能求一类的聚合值,且不能指定别名
     groupedDF
       .sum("amount")
-      .show()
 
 
 
@@ -209,7 +225,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     spark.sql(
       """select city,year,sum(amount) as sum_amount from sales
         |group by city,year grouping sets((city,year),())
-        |order by city desc,year desc""".stripMargin).show()
+        |order by city desc,year desc""".stripMargin)
     /*+---------+----+----------+
       |     city|year|sum_amount|
       +---------+----+----------+
@@ -226,12 +242,12 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     salesDF.rollup('city, 'year)
       .agg(sum("amount") as "sum_amount")
       .sort('city asc_nulls_last, 'year desc_nulls_last)
-      .show()
+
 
     spark.sql(
       """select city,year,sum(amount) as sum_amount from sales
         |group by city,year with rollup
-        |order by city desc,year desc""".stripMargin).show()
+        |order by city desc,year desc""".stripMargin)
 
     /*+---------+----+----------+
       |     city|year|sum_amount|
@@ -252,12 +268,12 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     salesDF.cube('city, 'year)
       .agg(sum("amount") as "sum_amount")
       .sort('city asc_nulls_last, 'year desc_nulls_last)
-      .show()
+
 
     spark.sql(
       """select city,year,sum(amount) as sum_amount from sales
         |group by city,year with cube
-        |order by city desc,year desc""".stripMargin).show()
+        |order by city desc,year desc""".stripMargin)
 
     /*+---------+----+----------+
       |     city|year|sum_amount|
@@ -281,7 +297,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     /*
       join优化:
            1.Broadcast Hash Join ： 广播Join,或者叫Map端Join,适合一张较小的表(默认10M)和一张大表进行join
-           2.Shuffle Hash Join :   适合一张小表和一张大表进行join，或者是两张小表之间的join
+           2.Shuffle Hash Join :   适合一张小表和一张大表进行join,或者是两张小表之间的join
            3.Sort Merge Join ：    适合两张较大的表之间进行join
     */
 
@@ -290,27 +306,23 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     val cities: DataFrame = Seq((0, "Beijing"), (1, "Shanghai"), (2, "Guangzhou"))
       .toDF("id", "name")
 
-    // join
+    // join连接
     person.join(cities, person.col("id") === cities.col("id"))
       .select(person.col("id"), cities.col("name") as "city")
-      .show()
 
-    // cross
+    // cross交叉连接(笛卡尔积)
     person.crossJoin(cities)
       .where(person.col("id") === cities.col("id"))
-      .show()
 
     // inner,left,left_outer,left_anti,left_semi,right,right_outer,outer,full,full_outer
     // left_anti操作是输出'左表独有的数据',如同 [left join + where t2.col is null] 的操作
-    person.join(cities, person.col("id") === cities.col("id"), joinType = "inner")
     person.join(cities, person.col("id") === cities.col("id"), joinType = "left_anti")
     person.join(cities, person.col("id") === cities.col("id"), joinType = "left").where(cities.col("id") isNull)
 
-
-    // ----------------  1.广播Join操作  -------------
+    // ---------------------  1.广播Join操作  --------------------
     /*
-    将小数据集分发给每一个Executor,让较大的数据集在Map端直接获取小数据集进行Join,这种方式是不需要进行Shuffle的,所以称之为Map端Join,或者广播join
-    spark会自动实现Map端Join,依赖spark.sql.autoBroadcastJoinThreshold=10M(默认)参数,当数据集小于这个参数的大小时,会自动进行Map端Join操作
+      将小数据集分发给每一个Executor,让较大的数据集在Map端直接获取小数据集进行Join,这种方式是不需要进行Shuffle的,所以称之为Map端Join,或者广播join
+      spark会自动实现Map端Join,依赖spark.sql.autoBroadcastJoinThreshold=10M(默认)参数,当数据集小于这个参数的大小时,会自动进行Map端Join操作
    */
 
     // 默认开启广播Join
@@ -331,7 +343,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, RelationalGroupedDataset, Row, 
     println(person.crossJoin(broadcast(cities)).queryExecution.sparkPlan.numberedTreeString)
 
     // sql版本的的广播Join,这是Hive1.6之前的写法,之后的版本自动识别小表
-    // spark.sql("""select /*+ MAPJOIN (rt) */ * from person cross join cities rt""")
+    spark.sql("""select /*+ MAPJOIN (rt) */ * from person cross join cities rt""")
 
     // sparkRDD版本的广播Join
     val personRDD: RDD[(Int, String, Int)] = spark.sparkContext.parallelize(Seq((0, "Lucy", 0), (1, "Lily", 0), (2, "Tim", 2), (3, "Danial", 3)))
