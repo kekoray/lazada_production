@@ -1,5 +1,9 @@
 package dataSource
 
+import java.time.LocalDate
+import java.util.Properties
+
+import dataSource.accessFile.Pay
 import nk_part.dataSet_op.Person
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
@@ -7,6 +11,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.expressions.{UserDefinedFunction, Window, WindowSpec}
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, KeyValueGroupedDataset, RelationalGroupedDataset, Row, SaveMode, SparkSession}
+
+import scala.util.parsing.json.JSON
 
 /*
  * 
@@ -561,6 +567,186 @@ import org.apache.spark.sql.{DataFrame, Dataset, KeyValueGroupedDataset, Relatio
     // 6.正反排序
     dataSet.sort('age.asc)
     dataSet.sort('age.desc)
+
+
+
+
+    // ====================================================================
+    // ===========================  整合读写JSON文件  =====================
+    // ====================================================================
+
+
+    // -------------  1.json转为rdd[T]: 利用JSON-API解析成Map类型数据,再封装到样例类中  --------------------
+    val sc = spark.sparkContext
+    // A.rdd读取文件
+    val jsonRDD: RDD[String] = sc.textFile("src/main/resources/item.jsonl")
+    // B.使用Scala中有自带JSON库解析,返回对象为Some(map: Map[String, Any])
+    val jsonParseRDD: RDD[Option[Any]] = jsonRDD.map(JSON.parseFull(_)) // Some(Map(payDate -> 2020-11-30 19:50:42, ... ))
+    // C.将Some数据转换为Map类型
+    val jsonMapRDD: RDD[Map[String, Any]] = jsonParseRDD.map(
+      r => r match {
+        case Some(map: Map[String, Any]) => map
+        case _ => null
+      }
+    )
+    // D.将数据封装到样例类中
+    val PayRdd: RDD[Pay] = jsonMapRDD.map(x => Pay(x("amount").toString, x("memberType").toString, x("orderNo").toString, x("payDate").toString, x("productType").toString))
+    PayRdd.foreach(println(_)) // Pay(40000.0,105,7E84FF304B45455894999A3FD9449093,2020-11-30 19:50:42,88.0)
+
+
+    // -------------  2.json转为DataFrame: 利用sparkSQL的json方法  --------------------
+    val jsonDF: DataFrame = spark.read.json("src/main/resources/item.jsonl")
+    jsonDF.show()
+
+
+    // -------------  3.写入json文件  --------------------
+    // 当底层有多个文件时,repartition重新分区只输出1个文件
+    jsonDF.repartition(1)
+      .write.json("src/main/resources/output/json")
+
+
+
+    // =======================================================================
+    // ===========================  整合hive  ================================
+    // =======================================================================
+
+    // spark整合hive的连接配置
+    val spark2: SparkSession = SparkSession.builder().master("local[*]").appName("accessHive")
+      .config("spark.sql.warehouse.dir", "hdfs://cdh1:8020/user/hive/warehouse") // 设置WareHouse的位置
+      .config("hive.metastore.uris", "thrift://cdh1:9083") // 设置MetaStore的位置
+      .enableHiveSupport() // 开启Hive支持
+      .config("hive.exec.dynamic.partition.mode", "nonstrict") // 设置动态分区模式
+      .getOrCreate()
+
+    // 隐私转换
+    import org.apache.spark.sql.functions._
+    import spark.implicits._
+
+
+    // =======================  创建操作  =======================
+    spark.sql("USE spark_test")
+    val createSql =
+      """Create External Table If Not Exists student
+        |( name String,
+        |  age  Int,
+        |  gpa  Decimal(5,2)
+        |) Comment '学生表'
+        |  Partitioned By (
+        |    dt String Comment '日期分区字段{"format":"yyyy-MM-dd"}')
+        |  Row Format Delimited
+        |    Fields Terminated By '\t'
+        |    Lines Terminated By '\n'
+        |  Stored As textfile
+        |  Location '/dataset/hive'
+        |  Tblproperties ("orc.compress" = "SNAPPY")""".stripMargin
+    spark.sql(createSql)
+
+
+    // =======================  写入操作  =======================
+    val data = Array(("张三", 21, 2.1), ("李四", 16, 1.2), ("王五", 18, 5.3))
+    val dataDF: DataFrame = spark.createDataset(data).toDF("name", "age", "gpa")
+    val result: Dataset[Row] = dataDF.select("name", "age", "gpa").where("age > 20")
+
+    // 设置dt分区字段 -- lit()用于创建自定义值的列
+    val resultDF: DataFrame = result.withColumn("dt", lit(LocalDate.now().toString.substring(0, 7)))
+    resultDF.show()
+
+    /* ---------------------  1.insertInto模式  ------------------------------
+      insertInto模式是按照数据位置顺序插入数据,前提是要设置动态分区模式 [config("hive.exec.dynamic.partition.mode", "nonstrict")]
+      若操作的是分区表,不用指定partitionBy(),会自动获取分区字段,从而插入对应分区的数据;
+      注意!! :  如果操作过[overwrite+saveAsTable]后,则会无法找到分区字段,overwrite+insertInto就会覆盖全表;
+        A. overwrite + insertInto : 在不影响其他分区数据的情况下,只覆盖指定分区的数据;
+        B. append + insertInto : 在表末尾追加增量数据
+    */
+    // 常用操作,相当于(Inset Overwrite .. Partition ..)
+    resultDF.write
+      .mode("overwrite")
+      .insertInto("spark_test.student")
+
+
+    /* ---------------------  2.saveAsTable模式  ------------------------------
+    A. overwrite + saveAsTable:
+        1.表存在,schema字段数相同,会按照新schema字段位置,覆盖全表插入数据
+        2.表不存在,或者表存在且schema字段数不相同,则会按照新schema进行重新建表并插入数据
+    B. append + saveAsTable:
+        1.表存在且表已有数据,直接在表末尾追加增量数据
+        2.表存在且表无数据,报错并提议使用insertInto
+        3.不存在,自动建表并插入数据
+    C. error + saveAsTable:
+        1.只要表存在,就抛出异常
+        2.不存在,自动建表并插入数据
+    D. ignore + saveAsTable:
+        1.只要表存在,无论有无数据,都无任何操作
+        2.表不存在,自动建表并插入数据
+    */
+    resultDF.write
+      .mode("append")
+      .partitionBy("dt")
+      .saveAsTable("spark_test.student")
+
+
+
+    // =======================  查询操作  =======================
+    spark.sql("select * from student").show()
+    spark.table("student").show()
+
+    // 简写方式
+    import spark.sql
+    sql("select * from student").show()
+
+    spark.stop()
+
+
+
+    // =======================================================================
+    // ===========================  整合MySQL  ================================
+    // =======================================================================
+
+
+    // =======================  读取操作  =======================
+    // 1.jdbc连接的配置文件
+    val properties = new Properties()
+    properties.put("user", "root")
+    properties.put("password", "123456")
+    properties.put("useSSL", "false")
+
+    // 2.需要URL,table,配置文件缺一不可,其中table项可写子查询语句
+    spark.read.jdbc("jdbc:mysql://192.168.100.216:3306/spark_test", "student", properties).show()
+    spark.read.jdbc("jdbc:mysql://192.168.100.216:3306/spark_test", "(select * from student where age > 20 ) as tab", properties).show()
+
+
+    // =======================  写入操作  =======================
+    // 1.设置schema表头,才能写对应字段写入MySQL中
+    val mysql_schema = StructType(
+      List(StructField("id", IntegerType),
+        StructField("name", StringType),
+        StructField("age", IntegerType),
+        StructField("gpa", DoubleType)))
+
+    // 2.读取csv文件
+    val csvDF: DataFrame = spark.read
+      .option("delimiter", "\t")
+      .schema(mysql_schema)
+      .csv("src/main/resources/student.csv")
+
+    // 4.保存到MySQL表中
+    csvDF.write.format("jdbc")
+      .mode("overwrite")
+      .option("url", "jdbc:mysql://192.168.100.216:3306/spark_test")
+      .option("dbtable", "student")
+      .option("user", "root")
+      .option("password", "123456")
+      .option("useSSL", "false") // 关闭SSL认证
+      .option("partitionColumn", "id") // 按照指定列进行分区,只能设置类型为数值的列
+      // 确定步长的参数,lowerBound-upperBound之间的数据均分给每一个分区,小于lowerBound的数据分给第一个分区,大于upperBound的数据分给最后一个分区
+      .option("lowerBound", 1)
+      .option("upperBound", 60)
+      .option("numPartitions", 10) // 分区数量
+      .save()
+
+
+
+
 
 
 

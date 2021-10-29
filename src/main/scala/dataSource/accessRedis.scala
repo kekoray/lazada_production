@@ -1,5 +1,7 @@
 package dataSource
 
+import org.apache.spark.sql.SparkSession
+
 /*
  * 
  * @ProjectName: lazada_production  
@@ -12,5 +14,12 @@ package dataSource
  * @create: 2021-10-18 15:12  
  * @Copyright (c) 2021,All Rights Reserved.
  */ object accessRedis {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder().master("local[*]").appName("accessRedis").getOrCreate()
+
+
+
+
+  }
 
 }
