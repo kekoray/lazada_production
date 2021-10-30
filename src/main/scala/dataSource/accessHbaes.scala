@@ -1,5 +1,8 @@
 package dataSource
 
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SparkSession
+
 /*
  * 
  * @ProjectName: lazada_production  
@@ -13,8 +16,12 @@ package dataSource
  * @Copyright (c) 2021,All Rights Reserved.
  */ object accessHbaes {
   def main(args: Array[String]): Unit = {
+    def main(args: Array[String]): Unit = {
+      val spark = SparkSession.builder().appName("accessHbaes").master("local[*]").getOrCreate()
+      val sc: SparkContext = spark.sparkContext
 
+      HBaseConfiguration.create()
 
+    }
   }
-
 }

@@ -20,19 +20,20 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
+    // 整合redis的配置
     val spark: SparkSession = SparkSession.builder().master("local[*]").appName("accessRedis")
       .config("spark.redis.host", "192.168.100.189")
       .config("spark.redis.port", "6379")
       .config("spark.redis.db", "1")
-      .config("spark.redis.auth", "96548e1f-0440-4e48-8ab9-7bb1e3d45238") // redis密码
+      .config("spark.redis.auth", "96548e1f-0440-4e48-8ab9-7bb1e3d45238")
       .config("redis.timeout", "2000")
       .config("spark.port.maxRetries", "1000")
       .getOrCreate()
-
-    import spark.implicits._
     val sc: SparkContext = spark.sparkContext
 
-    //
+
+    // redisAPI的隐式转换
+    import spark.implicits._
     import com.redislabs.provider.redis._
 
 
@@ -40,11 +41,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     // KV处理的是string类型数据
 
     // 获取相匹配的key
-    sc.fromRedisKeys (Array("customer*"), 3).collect().foreach(println)//???
-
-
-
-    sc.fromRedisKeyPattern("customer*", 5).collect().foreach(println)
+    sc.fromRedisKeys(Array("customer_gender")).collect().foreach(println) // 搞不懂什么用处
+    sc.fromRedisKeyPattern("customer*").collect().foreach(println)
 
     // 根据key获取对应的value值
     sc.fromRedisKV("customer_gender").collect().foreach(println)
@@ -54,6 +52,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     sc.fromRedisHash("user:1000").collect().foreach(println)
     sc.fromRedisSet("user:1000:*").collect().foreach(println)
     sc.fromRedisSet(Array("user:1000:email", "user:1000:phones")).collect().foreach(println)
+
 
     // ---------------------  写入操作  ------------------------------
     sc.toRedisLIST(Seq("lili", "or", "zz").toDS().rdd, "list_name")
