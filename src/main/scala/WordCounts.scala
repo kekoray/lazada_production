@@ -30,11 +30,11 @@ object WordCounts {
 
     val spark: SparkSession = new SparkSession.Builder()
       // hive配置
-//      .config("spark.sql.warehouse.dir", "hdfs://cdh1:8020/user/hive/warehouse")
-//      .config("hive.metastore.uris", "thrift://cdh1:9083")
+      //      .config("spark.sql.warehouse.dir", "hdfs://cdh1:8020/user/hive/warehouse")
+      //      .config("hive.metastore.uris", "thrift://cdh1:9083")
       .appName("wordCount")
       // 支持hive操作
-//      .enableHiveSupport()
+      //      .enableHiveSupport()
       .master("local[*]")
       .getOrCreate()
 
