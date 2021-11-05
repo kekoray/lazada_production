@@ -584,6 +584,40 @@ import scala.util.parsing.json.JSON
 
 
 
+
+    // =======================================================================
+    // ===========================  DS,DF,RDD转换  ============================
+    // =======================================================================
+
+    /*
+      DF与DS关系:
+          1.DataFrame就是Dataset[Row]
+          2.DataFrame 是弱类型的操作; dataset是强类型的操作
+          3.dataframe的范型只有Row; Dataset的范型可以是任意类型
+          4.dataframe只能做到运行时类型检查; dataset可以做到编译时和运行时都检查
+
+      应该场景:
+          Spark-RDD主要用于处理非结构化数据和半结构化数据,且数据没有schema信息
+          Spark-SQL主要用于处理结构化数据和带有schema的半结构化数据
+     */
+
+    // 1.RDD[T]转换为Dataset[T]/DataFrame
+    val peopleRDD: RDD[People] = spark.sparkContext.makeRDD(Seq(People("zhangsan", 22), People("lisi", 15)))
+    val peopleDS: Dataset[People] = peopleRDD.toDS()
+    val peopleDF: DataFrame = peopleDS.toDF()
+
+    // 2.Dataset[T]/DataFrame互相转换
+    val peopleDF_fromDS: DataFrame = peopleDS.toDF()
+    val peopleDS_fromDF: Dataset[People] = peopleDF.as[People]
+
+    // 3.Dataset[T]/DataFrame转换为RDD[T]
+    val RDD_fromDF: RDD[Row] = peopleDF.rdd
+    val RDD_fromDS: RDD[People] = peopleDS.rdd
+
+
+
+
+
     // ====================================================================
     // ===========================  整合读写JSON文件  =====================
     // ====================================================================
@@ -1065,38 +1099,6 @@ import scala.util.parsing.json.JSON
 
     admin.close()
     sc.stop()
-
-
-    // =======================================================================
-    // ===========================  DS,DF,RDD转换  ============================
-    // =======================================================================
-
-    /*
-      DF与DS关系:
-          1.DataFrame就是Dataset[Row]
-          2.DataFrame 是弱类型的操作; dataset是强类型的操作
-          3.dataframe的范型只有Row; Dataset的范型可以是任意类型
-          4.dataframe只能做到运行时类型检查; dataset可以做到编译时和运行时都检查
-
-      应该场景:
-          Spark-RDD主要用于处理非结构化数据和半结构化数据,且数据没有schema信息
-          Spark-SQL主要用于处理结构化数据和带有schema的半结构化数据
-
-     */
-
-
-    // 1.RDD[T]转换为Dataset[T]/DataFrame
-    val peopleRDD: RDD[People] = spark.sparkContext.makeRDD(Seq(People("zhangsan", 22), People("lisi", 15)))
-    val peopleDS: Dataset[People] = peopleRDD.toDS()
-    val peopleDF: DataFrame = peopleDS.toDF()
-
-    // 2.Dataset[T]/DataFrame互相转换
-    val peopleDF_fromDS: DataFrame = peopleDS.toDF()
-    val peopleDS_fromDF: Dataset[People] = peopleDF.as[People]
-
-    // 3.Dataset[T]/DataFrame转换为RDD[T]
-    val RDD_fromDF: RDD[Row] = peopleDF.rdd
-    val RDD_fromDS: RDD[People] = peopleDS.rdd
 
 
   }
