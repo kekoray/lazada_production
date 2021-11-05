@@ -4,11 +4,8 @@
       <root url="jar://D:/Maven_Repository/com/hortonworks/shc-core/1.1.0-2.1-s_2.11/shc-core-1.1.0-2.1-s_2.11.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://D:/Maven_Repository/antlr/antlr/2.7.7/antlr-2.7.7-javadoc.jar!/" />
       <root url="https://repo.hortonworks.com/content/repositories/releases/com/hortonworks/shc-core/1.1.0-2.1-s_2.11/shc-core-1.1.0-2.1-s_2.11.jar" />
     </JAVADOC>
-    <SOURCES>
-      <root url="jar://D:/Maven_Repository/antlr/antlr/2.7.7/antlr-2.7.7-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

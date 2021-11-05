@@ -43,7 +43,6 @@ import scala.util.parsing.json.JSON
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
     val spark = SparkSession.builder().master("local[*]").appName("dataFrame_op").getOrCreate()
     import org.apache.spark.sql.functions._
-    import spark.implicits._
 
 
     // *****************************************************************************************************
@@ -57,7 +56,6 @@ import scala.util.parsing.json.JSON
 
 
     // =======================  DataFrame-创建方式  =======================
-
     // ---------------------  1.通过隐式转换创建(toDF)  --------------------
     // rdd => df
     val dataRdd: RDD[(String, Int)] = spark.sparkContext.makeRDD(Seq(("tom", 11), ("tony", 33)))
