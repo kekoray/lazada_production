@@ -88,7 +88,6 @@ import scala.collection.mutable
       .foreach(println)
 
 
-
     // ----------------  过滤与排序  -------------------------
     // filter -- 过滤掉数据集中一部分元素
     sc.makeRDD(Seq(1, 2, 3, 4))
@@ -115,81 +114,64 @@ import scala.collection.mutable
     val rdd1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 1)))
     val rdd2 = sc.parallelize(Seq(("a", 10), ("a", 11), ("a", 12)))
     val rdd3 = sc.parallelize(Seq(("zhangsan", 99.0), ("zhangsan", 96.0), ("lisi", 97.0), ("lisi", 98.0), ("zhangsan", 97.0)))
-    val rdd4 = sc.parallelize(Seq(("zhangsan", 22.0), ("zhangsan", 35.0), ("lisi", 97.0), ("lisi", 98.0), ("zhangsan", 97.0)))
+    val rdd4 = sc.parallelize(Seq(("zhangsan", 22.0), ("zhangsan", 35.0), ("lisi", 98.0), ("jort", 97.0)))
+    val rdd5 = sc.parallelize(Seq(("手机", 10.0), ("手机", 15.0), ("电脑", 20.0)))
 
-    //
+    // union -- 并集
     rdd1.union(rdd2).foreach(println)
+
+    // intersection -- 交集
     rdd1.intersection(rdd2).foreach(println)
+
+    // subtract -- 差集
     rdd1.subtract(rdd2).foreach(println)
-    rdd1.subtract(rdd2).foreach(println)
+
+    // join -- 将两个RDD按照相同的Key进行内连接,结果是一个笛卡尔积形式
     rdd1.join(rdd2).foreach(println)
+
+    // distinct -- 去重
     rdd1.distinct().foreach(println)
+
+    // reduceByKey -- 按照Key分组,把每组的Value计算出一个聚合值
     rdd1.reduceByKey((x, y) => x + y).foreach(println)
+
+    // groupByKey -- 按照Key分组,列举Key对应的所有Value
     rdd1.groupByKey().foreach(println)
 
-
-    // combineByKey
-    type RDDType = (Double, Int) // type用于封装数据类型为(Double, Int)在变量RDDType里
-
+    // combineByKey -- 按照Key分组,对Value进行聚合计算; groupByKey/reduceByKey的底层都是combineByKey.
     rdd3.combineByKey(
-      createCombiner = (curr: Double) => (curr, 1),
-      mergeValue = (curr: RDDType, nextValue: Double) => (curr._1 + nextValue, curr._2 + 1),
-      mergeCombiners = (curr: RDDType, agg: RDDType) => (curr._1 + agg._1, curr._2 + agg._2))
-      .map(x => (x._1 -> x._2._1 / x._2._2)) // 分组后求求平均
+      createCombiner = (curr: Double) => (curr, 1), // createCombiner ==> 将Value进行初步转换
+      mergeValue = (curr: (Double, Int), nextValue: Double) => (curr._1 + nextValue, curr._2 + 1), // mergeValue ==> 在每个分区把上一步转换的结果聚合计算
+      mergeCombiners = (curr: (Double, Int), agg: (Double, Int)) => (curr._1 + agg._1, curr._2 + agg._2) // mergeCombiners ==> 在所有分区上把每个分区的聚合结果聚合
+    ).map(x => (x._1 -> x._2._1 / x._2._2)) // 分组后求求平均
       .foreach(println)
 
-    // aggregateByKey
-    rdd3.aggregateByKey(0.5)(
-      seqOp = (zero, price) => price * zero,
-      combOp = (curr, agg) => curr + agg
+    // aggregateByKey -- 针对每个数据要先处理,后聚合的操作
+    rdd5.aggregateByKey(zeroValue = 0.5)( // zeroValue ==> 指定初始值
+      seqOp = (zero, price) => price * zero, // seqOp=(初始值, value) ==> 每一个元素的value与初始值进行计算
+      combOp = (curr, agg) => curr + agg // combOp=(value, agg) ==> 将seqOp的结果进行同key分组,聚合计算整组的value
     ).foreach(println)
 
-    rdd3.foldByKey(10)((curr, agg) => curr + agg).foreach(println)
+    // foldByKey -- 按照Key分组,把每组的Value计算出一个聚合值,和reduceByKey的区别是可以指定初始值
+    rdd3.foldByKey(zeroValue = 10)( // // zeroValue ==> 指定初始值
+      (curr, agg) => curr + agg)
+      .foreach(println)
 
-    rdd3.cogroup(rdd4).foreach(println)
+    // cogroup -- 将多个RDD中Key相同的Value分组.
+    rdd3.cogroup(rdd4, rdd1).foreach(println)
+
 
     // ----------------  重分区  -------------------------
+    // coalesce -- 减少分区数; shuffle = false(默认)时,只能减少分区数; shuffle = true时,才能增加分区数
+    println(sc.makeRDD(Seq(1, 2, 3, 4, 5), 5)
+      .coalesce(1, shuffle = false)
+      .partitions.size)
 
+    // repartition -- 重新指定分区数,默认是会有Shuffle操作.
+    println(sc.makeRDD(Seq(1, 2, 3, 4, 5), 5)
+      .repartition(1)
+      .partitions.size)
 
-    // flatmap
-    sc.makeRDD(Seq("Hello lily", "Hello lucy", "Hello tim"))
-      .flatMap(_.split(" "))
-      .foreach(println)
-
-    // filter
-    sc.makeRDD(Seq(1, 2, 3))
-      .filter(_ > 2)
-      .foreach(println)
-
-
-
-
-    // mapPartitionsWithIndex
-    // mapValues
-    // sample
-    // union
-    // intersection
-    // subtract
-    // distinct
-
-
-    // reducebykey
-    sc.makeRDD(Seq(("a", 1), ("a", 1), ("b", 1)))
-      .reduceByKey((x, y) => x + y)
-      .foreach(println)
-
-    // groupByKey
-    // combineByKey
-    // aggregateByKey
-    // foldByKey
-    // join
-    // cogroup
-    // cartesian
-    // sortBy
-    // partitionBy
-    // coalesce
-    // repartition
-    // repartitionAndSortWithinPartitions
 
 
     // =======================================================================
