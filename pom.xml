@@ -14,16 +14,6 @@
             <name>aliyun maven</name>
             <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
         </repository>
-        <!--        <repository>-->
-        <!--            <id>cactiviti-repos</id>-->
-        <!--            <name>Activiti Repository</name>-->
-        <!--            <url>https://maven.alfresco.com/nexus/content/groups/public</url>-->
-        <!--        </repository>-->
-        <!--        <repository>-->
-        <!--            <id>acentral-repos</id>-->
-        <!--            <name>Central Repository</name>-->
-        <!--            <url>http://repo.maven.apache.org/maven2</url>-->
-        <!--        </repository>-->
     </repositories>
 
     <!-- spark,hive,Scala三个版本要一致,否则操作会报错  ==> [Invalid method name: 'get_table_req'] -->
@@ -79,52 +69,22 @@
             <version>2.6.0</version>
         </dependency>
 
-        <!--        &lt;!&ndash;  hadoop  &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hadoop</groupId>-->
-        <!--            <artifactId>hadoop-client</artifactId>-->
-        <!--            <version>3.0.0</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hadoop</groupId>-->
-        <!--            <artifactId>hadoop-hdfs</artifactId>-->
-        <!--            <version>3.0.0</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hadoop</groupId>-->
-        <!--            <artifactId>hadoop-common</artifactId>-->
-        <!--            <version>3.0.0</version>-->
-        <!--        </dependency>-->
-
-        <!--        &lt;!&ndash;  hive  &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hive</groupId>-->
-        <!--            <artifactId>hive-serde</artifactId>-->
-        <!--            <version>2.1.1</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hive</groupId>-->
-        <!--            <artifactId>hive-exec</artifactId>-->
-        <!--            <version>2.1.1</version>-->
-        <!--            <exclusions>-->
-        <!--                <exclusion>-->
-        <!--                    <groupId>org.apache.avro</groupId>-->
-        <!--                    <artifactId>avro</artifactId>-->
-        <!--                </exclusion>-->
-        <!--            </exclusions>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--        <groupId>org.apache.hive.hcatalog</groupId>-->
-        <!--        <artifactId>hive-hcatalog-core</artifactId>-->
-        <!--        <version>3.0.0</version>-->
-        <!--        <exclusions>-->
-        <!--            <exclusion>-->
-        <!--                <groupId>org.apache.avro</groupId>-->
-        <!--                <artifactId>avro</artifactId>-->
-        <!--            </exclusion>-->
-        <!--        </exclusions>-->
-        <!--        </dependency>-->
-
+        <!--                &lt;!&ndash;  hadoop  &ndash;&gt;-->
+        <!--                <dependency>-->
+        <!--                    <groupId>org.apache.hadoop</groupId>-->
+        <!--                    <artifactId>hadoop-client</artifactId>-->
+        <!--                    <version>3.0.0</version>-->
+        <!--                </dependency>-->
+        <!--                <dependency>-->
+        <!--                    <groupId>org.apache.hadoop</groupId>-->
+        <!--                    <artifactId>hadoop-hdfs</artifactId>-->
+        <!--                    <version>3.0.0</version>-->
+        <!--                </dependency>-->
+        <!--                <dependency>-->
+        <!--                    <groupId>org.apache.hadoop</groupId>-->
+        <!--                    <artifactId>hadoop-common</artifactId>-->
+        <!--                    <version>3.0.0</version>-->
+        <!--                </dependency>-->
 
         <!--  Hbaes  -->
         <dependency>
@@ -144,24 +104,6 @@
             <artifactId>phoenix-core</artifactId>
             <version>5.0.0-HBase-2.0</version>
         </dependency>
-
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hbase</groupId>-->
-        <!--            <artifactId>hbase-client</artifactId>-->
-        <!--            <version>2.1.0</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hbase</groupId>-->
-        <!--            <artifactId>hbase-common</artifactId>-->
-        <!--            <version>2.1.0</version>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.hbase</groupId>-->
-        <!--            <artifactId>hbase-server</artifactId>-->
-        <!--            <version>2.1.0</version>-->
-        <!--        </dependency>-->
-
-
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -189,10 +131,7 @@
             <version>4.10</version>
             <scope>provided</scope>
         </dependency>
-
-
     </dependencies>
-
 
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
@@ -262,6 +201,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>

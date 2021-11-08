@@ -24,33 +24,32 @@ import scala.collection.mutable
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
+
+    // =======================================================================
+    // ===========================  RDD创建  ================================
+    // ***********************************************************************
     val conf = new SparkConf().setAppName("nk_part.rdd_part").setMaster("local[2]")
     val sc = new SparkContext(conf)
 
+    // 1.通过本地集合直接创建,使用parallelize和makeRDD
+    val seq = Seq(1, 2, 3, 4, 5)
+    val rdd1: RDD[Int] = sc.parallelize(seq, 2)
+    val rdd2: RDD[Int] = sc.makeRDD(seq, 2)
+    rdd1.foreach(x => print(s"rdd1 : ${x}   "))
+    rdd2.foreach(x => print(s"rdd2 : ${x}   "))
 
-    //    // =======================================================================
-    //    // ===========================  RDD创建  ================================
-    //    // ***********************************************************************
-    //
-    //    // 1.通过本地集合直接创建,使用parallelize和makeRDD
-    //    val seq = Seq(1, 2, 3, 4, 5)
-    //    val rdd1: RDD[Int] = sc.parallelize(seq, 2)
-    //    val rdd2: RDD[Int] = sc.makeRDD(seq, 2)
-    //    rdd1.foreach(x => print(s"rdd1 : ${x}   "))
-    //    rdd2.foreach(x => print(s"rdd2 : ${x}   "))
-    //
-    //    // 2.通过读取外部数据集来创建
-    //    /* a.访问本地文件,sc.textFile("file:///…")
-    //       b.访问其他系统的文件,sc.textFile("hdfs://node-1:8020/dataset")   */
-    //    val source: RDD[String] = sc.textFile("src/main/resources/wordcount.txt", 2)
-    //    source.foreach(x => println(s"source : ${x}   "))
-    //
-    //    // 3.通过其它的RDD衍生而来
-    //    val rdd3: RDD[String] = source.flatMap(_.split(" "))
-    //    rdd3.foreach(x => print(s"rdd3 : ${x}   "))
-    //
-    //
-    //
+    // 2.通过读取外部数据集来创建
+    /* a.访问本地文件,sc.textFile("file:///…")
+       b.访问其他系统的文件,sc.textFile("hdfs://node-1:8020/dataset")   */
+    val source: RDD[String] = sc.textFile("src/main/resources/wordcount.txt", 2)
+    source.foreach(x => println(s"source : ${x}   "))
+
+    // 3.通过其它的RDD衍生而来
+    val rdd3: RDD[String] = source.flatMap(_.split(" "))
+    rdd3.foreach(x => print(s"rdd3 : ${x}   "))
+
+
+
     // =======================================================================
     // ===========================  RDD转换算子  ===============================
     // ***********************************************************************
@@ -190,22 +189,21 @@ import scala.collection.mutable
     sc.makeRDD(Seq(("手机", 10.0), ("手机", 15.0), ("电脑", 20.0)))
       .count()
 
-    // first --
+    // first -- first只是获取第一个元素,所以first只会处理第一个分区,所以速度很快,无序处理所有数据
     sc.makeRDD(Seq(("手机", 10.0), ("手机", 15.0), ("电脑", 20.0)))
       .first()
 
-    // take
+    // take -- 返回整个数据集中==前 N 个元素==
     sc.makeRDD(Seq(("手机", 10.0), ("手机", 15.0), ("电脑", 20.0)))
       .take(2)
 
-    // takeSample
+    // takeSample -- 类似于sample,区别在这是一个Action,也是采样获取数据,并直接返回结果
     sc.makeRDD(Seq(("手机", 10.0), ("手机", 15.0), ("电脑", 20.0)))
       .takeSample(withReplacement = true, 1)
 
-
     // saveAsTextFile -- 将结果存入path对应的文件中
     sc.makeRDD(Seq(("手机", 10.0), ("手机", 15.0), ("电脑", 20.0)))
-        .saveAsTextFile("./文件位置")
+      .saveAsTextFile("./文件位置")
 
     // countByKey -- 求得整个数据集中Key以及对应Key出现的次数,返回值为Map(Key,count(Key))
     // 如果要解决数据倾斜的问题,是要先知道谁倾斜,通过countByKey可以查看Key对应的数据总数,从而解决倾斜问题
@@ -220,82 +218,82 @@ import scala.collection.mutable
     // =======================================================================
     // ===========================  RDD分区操作  ================================
     // ***********************************************************************
-    //
-    //
-    //    // 查看分区数
-    //    println(sc.makeRDD(Seq(1, 2, 3, 4)).map(_ * 10).partitions.size)
-    //
-    //    // 1.创建RDD时指定分区数
-    //    println(sc.makeRDD(Seq(1, 2, 3, 4), 10).partitions.size) // 10
-    //    // 2.通过coalesce算子指定
-    //    println(sc.makeRDD(Seq(1, 2, 3, 4), 10).coalesce(5, shuffle = false).partitions.size) // 5
-    //    // 3.通过repartition算子指定
-    //    println(sc.makeRDD(Seq(1, 2, 3, 4), 10).repartition(3).partitions.size) // 3
-    //
-    //
-    //    // =======================================================================
-    //    // ===========================  RDD容错  ================================
-    //    // ***********************************************************************
-    //
-    //
-    //    //----------------  缓存  ----------------
-    //    val rdd = sc.makeRDD(Seq("a", "b", "c"))
-    //      .map((_, 1))
-    //      .reduceByKey((x, y) => x + y)
-    //
-    //    // cache等同于persist() ==> persist(StorageLevel.MEMORY_ONLY)
-    //    rdd.cache()
-    //
-    //    // persist能够指定缓存的级别
-    //    rdd.persist(StorageLevel.MEMORY_ONLY)
-    //
-    //    // 清理缓存
-    //    rdd.unpersist()
-    //
-    //    //----------------  Checkpoint  ----------------
-    //
-    //    // 1.先设置Checkpoint的存储路径
-    //    sc.setCheckpointDir("checkpoint")
-    //
-    //    // 2.开启Checkpoint
-    //    rdd.checkpoint()
-    //
-    //
-    //    // =======================================================================
-    //    // ===========================  分布式变量  ================================
-    //    // ***********************************************************************
-    //
-    //
-    //    //----------------  全局累加器  ----------------
-    //    // 支持数值型累加add()的分布式变量,默认值为0,遇到action算子触发
-    //    val counter = sc.longAccumulator("counter")
-    //    sc.makeRDD(Seq(1, 2, 3, 4)).foreach(counter.add(_))
-    //    //    print(counter.value)
-    //
-    //
-    //    //----------------  自定义累加器  ----------------
-    //    val infoAccumulator = new InfoAccumulator()
-    //    // 注册自定义累加器
-    //    sc.register(infoAccumulator, "infos")
-    //    sc.makeRDD(Seq("1", "2", "3", "4")).foreach(infoAccumulator.add)
-    //    //    print(counter.value)
-    //
-    //
-    //    //----------------  广播变量  ----------------
-    //    // 1.创建广播变量
-    //    val a = sc.broadcast(1)
-    //    // 2.获取值
-    //    println(a.value)
-    //    // 3.销毁变量,释放内存空间
-    //    a.destroy()
-    //
-    //    // 唯一标识
-    //    println(a.id)
-    //    // 字符串表示
-    //    println(a.toString())
-    //    // 在Executor中异步的删除缓存副本
-    //    a.unpersist()
-    //
+
+
+    // 查看分区数
+    println(sc.makeRDD(Seq(1, 2, 3, 4)).map(_ * 10).partitions.size)
+
+    // 1.创建RDD时指定分区数
+    println(sc.makeRDD(Seq(1, 2, 3, 4), 10).partitions.size) // 10
+    // 2.通过coalesce算子指定
+    println(sc.makeRDD(Seq(1, 2, 3, 4), 10).coalesce(5, shuffle = false).partitions.size) // 5
+    // 3.通过repartition算子指定
+    println(sc.makeRDD(Seq(1, 2, 3, 4), 10).repartition(3).partitions.size) // 3
+
+
+    // =======================================================================
+    // ===========================  RDD容错  ================================
+    // ***********************************************************************
+
+
+    //----------------  缓存  ----------------
+    val rdd = sc.makeRDD(Seq("a", "b", "c"))
+      .map((_, 1))
+      .reduceByKey((x, y) => x + y)
+
+    // cache等同于persist() ==> persist(StorageLevel.MEMORY_ONLY)
+    rdd.cache()
+
+    // persist能够指定缓存的级别
+    rdd.persist(StorageLevel.MEMORY_ONLY)
+
+    // 清理缓存
+    rdd.unpersist()
+
+    //----------------  Checkpoint  ----------------
+
+    // 1.先设置Checkpoint的存储路径
+    sc.setCheckpointDir("checkpoint")
+
+    // 2.开启Checkpoint
+    rdd.checkpoint()
+
+
+    // =======================================================================
+    // ===========================  分布式变量  ================================
+    // ***********************************************************************
+
+
+    //----------------  全局累加器  ----------------
+    // 支持数值型累加add()的分布式变量,默认值为0,遇到action算子触发
+    val counter = sc.longAccumulator("counter")
+    sc.makeRDD(Seq(1, 2, 3, 4)).foreach(counter.add(_))
+    //    print(counter.value)
+
+
+    //----------------  自定义累加器  ----------------
+    val infoAccumulator = new InfoAccumulator()
+    // 注册自定义累加器
+    sc.register(infoAccumulator, "infos")
+    sc.makeRDD(Seq("1", "2", "3", "4")).foreach(infoAccumulator.add)
+    //    print(counter.value)
+
+
+    //----------------  广播变量  ----------------
+    // 1.创建广播变量
+    val a = sc.broadcast(1)
+    // 2.获取值
+    println(a.value)
+    // 3.销毁变量,释放内存空间
+    a.destroy()
+
+    // 唯一标识
+    println(a.id)
+    // 字符串表示
+    println(a.toString())
+    // 在Executor中异步的删除缓存副本
+    a.unpersist()
+
 
   }
 
