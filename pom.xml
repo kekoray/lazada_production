@@ -55,6 +55,15 @@
             <version>${spark.version}</version>
         </dependency>
 
+
+        <!--  spark-streaming-->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.11</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+
+
         <!--  mysql  -->
         <dependency>
             <groupId>mysql</groupId>
