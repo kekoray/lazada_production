@@ -45,7 +45,8 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
-            <version>${spark.version}</version>
+<!--            <version>${spark.version}</version>-->
+            <version>2.4.3</version>
         </dependency>
 
         <!--  spark整合hive  -->
@@ -63,12 +64,26 @@
             <version>${spark.version}</version>
         </dependency>
 
+        <!-- sparksql-kafka -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql-kafka-0-10_2.11</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+
+        <!-- sparkstreaming-kafka -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming-kafka-0-10_2.11</artifactId>
+            <version>2.2.0</version>
+        </dependency>
 
         <!--  mysql  -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>6.0.2</version>
+<!--            <version>6.0.2</version>-->
+            <version>8.0.23</version>
         </dependency>
 
         <!--  redis  -->

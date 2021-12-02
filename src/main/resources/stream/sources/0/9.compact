@@ -1,0 +1,11 @@
+v1
+{"path":"hdfs://cdh1:8020/dataset/dataset/text0.json._COPYING_","timestamp":1638416664278,"batchId":0}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text0.json","timestamp":1638416664500,"batchId":1}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text1.json._COPYING_","timestamp":1638416670661,"batchId":2}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text1.json","timestamp":1638416670869,"batchId":3}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text2.json._COPYING_","timestamp":1638416676988,"batchId":4}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text2.json","timestamp":1638416677201,"batchId":5}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text3.json._COPYING_","timestamp":1638416683376,"batchId":6}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text3.json","timestamp":1638416683580,"batchId":7}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text4.json._COPYING_","timestamp":1638416799942,"batchId":8}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text4.json","timestamp":1638416800162,"batchId":9}

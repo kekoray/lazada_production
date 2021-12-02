@@ -1,0 +1,3 @@
+v1
+{"path":"hdfs://cdh1:8020/dataset/dataset/text5.json","timestamp":1638417411269,"batchId":10}
+{"path":"hdfs://cdh1:8020/dataset/dataset/text6.json","timestamp":1638417420709,"batchId":10}
