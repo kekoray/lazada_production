@@ -42,6 +42,7 @@
         </dependency>
 
         <!--  spark-sql  -->
+        <!--  2.4版本的StructuredStreaming-API中才有连续处理查询等新功能 -->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
