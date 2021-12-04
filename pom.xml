@@ -10,9 +10,30 @@
     <!--  指定maven源仓库  -->
     <repositories>
         <repository>
+<<<<<<< Updated upstream
             <id>balimaven</id>
             <name>aliyun maven</name>
             <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+=======
+            <id>abalimaven</id>
+            <name>aliyun maven</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+        </repository>
+        <!--        <repository>-->
+        <!--            <id>cactiviti-repos</id>-->
+        <!--            <name>Activiti Repository</name>-->
+        <!--            <url>https://maven.alfresco.com/nexus/content/groups/public</url>-->
+        <!--        </repository>-->
+        <!--        <repository>-->
+        <!--            <id>acentral-repos</id>-->
+        <!--            <name>Central Repository</name>-->
+        <!--            <url>http://repo.maven.apache.org/maven2</url>-->
+        <!--        </repository>-->
+        <repository>
+            <id>acentral-repos1</id>
+            <name>Central Repository 2</name>
+            <url>http://insecure.repo1.maven.org/maven2</url>
+>>>>>>> Stashed changes
         </repository>
     </repositories>
 
@@ -27,6 +48,11 @@
     </properties>
 
     <dependencies>
+<!--        <dependency>-->
+<!--            <groupId>com.hortonworks</groupId>-->
+<!--            <artifactId>shc-core</artifactId>-->
+<!--            <version>1.1.0-2.1-s_2.11</version>-->
+<!--        </dependency>-->
         <!--  scala  -->
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -95,9 +121,21 @@
 
         <!--  redis  -->
         <dependency>
+<<<<<<< Updated upstream
             <groupId>com.redislabs</groupId>
             <artifactId>spark-redis_2.11</artifactId>
             <version>2.6.0</version>
+=======
+            <groupId>org.apache.hive.hcatalog</groupId>
+            <artifactId>hive-hcatalog-core</artifactId>
+            <version>3.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.avro</groupId>
+                    <artifactId>avro</artifactId>
+                </exclusion>
+            </exclusions>
+>>>>>>> Stashed changes
         </dependency>
 
         <!--                &lt;!&ndash;  hadoop  &ndash;&gt;-->
@@ -136,26 +174,26 @@
             <version>5.0.0-HBase-2.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.slf4j</groupId>-->
+<!--            <artifactId>jcl-over-slf4j</artifactId>-->
+<!--            <version>${slf4j.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.slf4j</groupId>-->
+<!--            <artifactId>slf4j-api</artifactId>-->
+<!--            <version>${slf4j.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.slf4j</groupId>-->
+<!--            <artifactId>slf4j-log4j12</artifactId>-->
+<!--            <version>${slf4j.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>log4j</groupId>-->
+<!--            <artifactId>log4j</artifactId>-->
+<!--            <version>${log4j.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

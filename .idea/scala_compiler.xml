@@ -4,7 +4,7 @@
     <profile name="Maven 1" modules="lazada_production">
       <parameters>
         <parameter value="-dependencyfile" />
-        <parameter value="D:\Code_Repository\lazada_production\target/.scala_dependencies" />
+        <parameter value="E:\lazada_production\target/.scala_dependencies" />
       </parameters>
     </profile>
   </component>
