@@ -42,26 +42,32 @@
         </dependency>
 
         <!--  spark-sql  -->
-        <!--  2.4版本的StructuredStreaming-API中才有连续处理查询等新功能 -->
+        <!--  在2.4版本的StructuredStreaming-API中才有连续处理查询等新功能 -->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
-<!--            <version>${spark.version}</version>-->
-            <version>2.4.3</version>
-        </dependency>
-
-        <!--  spark整合hive  -->
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_2.11</artifactId>
             <version>${spark.version}</version>
+            <!--            <version>2.4.3</version>-->
         </dependency>
-
 
         <!--  spark-streaming-->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming_2.11</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+
+        <!--  spark-mllib  -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.11</artifactId>
+            <version>2.4.8</version>
+        </dependency>
+
+        <!--  spark-hive  -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_2.11</artifactId>
             <version>${spark.version}</version>
         </dependency>
 
@@ -83,7 +89,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-<!--            <version>6.0.2</version>-->
+            <!--            <version>6.0.2</version>-->
             <version>8.0.23</version>
         </dependency>
 
