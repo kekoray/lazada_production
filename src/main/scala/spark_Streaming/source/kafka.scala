@@ -94,11 +94,11 @@ import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
       .groupBy('has_person, 'start_time)
       .count()
 
-    //    result.writeStream
-    //      .outputMode(OutputMode.Complete())
-    //      .format("console")
-    //      .start()
-    //      .awaitTermination()
+        result.writeStream
+          .outputMode(OutputMode.Complete())
+          .format("console")
+          .start()
+          .awaitTermination()
 
 
 
