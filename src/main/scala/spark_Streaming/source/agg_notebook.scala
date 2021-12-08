@@ -2,12 +2,16 @@
 package spark_Streaming.source
 
 import java.sql.{Connection, DriverManager, Statement}
+import java.util.Properties
 
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.execution.streaming.Sink
 import org.apache.spark.sql.functions.from_json
+import org.apache.spark.sql.sources.{DataSourceRegister, StreamSinkProvider}
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.{BooleanType, DateType, StringType, StructType}
-import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SQLContext, SparkSession}
+import spark_Streaming.MySQLSink
 
 /*
  * 
@@ -50,9 +54,6 @@ import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
       .csv("hdfs://cdh1:8020//dataset/dataset")
 
 
-    // =======================  hdfs  =======================
-
-
     /*  =======================  kafka  ======================================
         读取Kafka消息的三种方式(startingOffsets):
                 1.earliest: 从每个Kafka分区最开始处开始获取
@@ -66,13 +67,11 @@ import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
       .option("startingOffsets", "earliest") // 读取Kafka消息的方式
       .load()
 
-
     /*
         Kafka消息的解析处理过程:
                 1.从获取Kafka的Schema信息可知,其中Kafka消息的Value是业务数据处理的主体内容,其为json格式;
                 2.利用多个StructType子嵌套构建json数据的Schema,再通过from_json函数反序列化解析Value中的json数据;
                 3.再通过点(.)形式获取所需的值,进行数据的业务处理;
-
 
         Kafka的Schema信息:
                 root
@@ -136,6 +135,7 @@ import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 
 
 
+
     // ========================================================
     // =======================  Sink  =======================
     // ********************************************************
@@ -150,14 +150,14 @@ import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
                 3.Trigger.Once():  一次性批次处理,只执行一个微批处理来处理所有可用数据,然后自行停止;
                 4.Trigger.Continuous("1 second"): 连续流处理,查询将在新的低延迟,连续处理模式下执行;
     */
-    //    source.writeStream
-    //      .format("console")
-    //      .outputMode("complete")
-    //      .trigger(Trigger.ProcessingTime("1 seconds"))      // 1.按照固定时间间隔划分批次处理
-    //      .trigger(Trigger.Once())                           // 2.一次性批次处理
-    //      .trigger(Trigger.Continuous("1 second"))           // 3.连续流处理
-    //      .start()
-    //      .awaitTermination()
+//    jsonSource.writeStream
+//      .format("console")
+//      .outputMode("complete")
+//      .trigger(Trigger.ProcessingTime("1 seconds"))     // 1.按照固定时间间隔划分批次处理
+//      .trigger(Trigger.Once())                          // 2.一次性批次处理
+//      .trigger(Trigger.Continuous("1 second"))          // 3.连续流处理
+//      .start()
+//      .awaitTermination()
 
 
     // =======================  console  ===========================
@@ -180,6 +180,7 @@ import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
       .start()
       .awaitTermination()
 
+
     // =======================  kafka  ===========================
     kafkaSource.writeStream
       .format("kafka")
@@ -188,7 +189,6 @@ import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
       .option("topic", "streaming-test")
       .start()
       .awaitTermination()
-
 
 
     /*  =======================  foreach-writer  =================================
@@ -226,10 +226,47 @@ import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 
 
     // =======================  自定义sink  =======================
+    // ---------------------  1.创建Sink子类  --------------------
+    class MySQLSink(options: Map[String, String], outputMode: OutputMode) extends Sink {
+      override def addBatch(batchId: Long, data: DataFrame): Unit = {
+        // 从option中获取需要的参数
+        val userName = options.get("userName").orNull
+        val password = options.get("password").orNull
+        val table = options.get("table").orNull
+        val jdbcUrl = options.get("jdbcUrl").orNull
 
+        val properties = new Properties
+        properties.setProperty("user", userName)
+        properties.setProperty("password", password)
 
+        data.write.mode(outputMode.toString).jdbc(jdbcUrl, table, properties)
+      }
+    }
 
+    // ---------------------  2.创建Sink注册器,获取创建Sink的必备依赖  --------------------
+    class MySQLStreamSinkProvider extends StreamSinkProvider with DataSourceRegister {
 
+      override def createSink(sqlContext: SQLContext,
+                              parameters: Map[String, String],
+                              partitionColumns: Seq[String],
+                              outputMode: OutputMode): Sink = {
+        new MySQLSink(parameters, outputMode)
+      }
+
+      // Sink的功能名称,可在format中使用
+      override def shortName(): String = "mysql"
+    }
+
+    // ---------------------  3.调用自定义sink  --------------------
+    jsonSource.writeStream
+      .format("spark_Streaming.MySQLStreamSinkProvider") // 自定义sink的DataSourceRegister的class位置
+      .option("checkpointLocation", "hdfs://cdh1:8020//dataset/checkpoint")
+      .option("userName", "root")
+      .option("password", "123456")
+      .option("table", "test")
+      .option("jdbcUrl", "jdbc:mysql://192.168.101.88:3306/test_base")
+      .start()
+      .awaitTermination()
   }
 
 }
