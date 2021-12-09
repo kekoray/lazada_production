@@ -1,5 +1,5 @@
 
-package spark_Streaming.source
+package spark_OLAP.spark_Streaming.source
 
 import java.sql.{Connection, DriverManager, Statement}
 import java.util.Properties
@@ -11,12 +11,12 @@ import org.apache.spark.sql.sources.{DataSourceRegister, StreamSinkProvider}
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.{BooleanType, DateType, StringType, StructType}
 import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SQLContext, SparkSession}
-import spark_Streaming.MySQLSink
+import spark_OLAP.spark_Streaming.MySQLSink
 
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: spark_Streaming.source   
+ * @program: spark_OLAP.spark_Streaming.source
  * @FileName: agg_notebook 
  * @description:  TODO   
  * @version: 1.0   
@@ -259,7 +259,7 @@ import spark_Streaming.MySQLSink
 
     // ---------------------  3.调用自定义sink  --------------------
     jsonSource.writeStream
-      .format("spark_Streaming.MySQLStreamSinkProvider") // 自定义sink的DataSourceRegister的class位置
+      .format("spark_OLAP.spark_Streaming.MySQLStreamSinkProvider") // 自定义sink的DataSourceRegister的class位置
       .option("checkpointLocation", "hdfs://cdh1:8020//dataset/checkpoint")
       .option("userName", "root")
       .option("password", "123456")

@@ -1,4 +1,4 @@
-package spark_Streaming.source
+package spark_OLAP.spark_Streaming.source
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.streaming.OutputMode
@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: spark_Streaming
+ * @program: spark_OLAP.spark_Streaming
  * @FileName: kafka
  * @description:  TODO
  * @version: 1.0

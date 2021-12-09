@@ -19,7 +19,7 @@ import scala.util.Try
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: dataSource   
+ * @program: spark_OLAP.dataSource
  * @FileName: accessHbaes 
  * @description:  TODO   
  * @version: 1.0   

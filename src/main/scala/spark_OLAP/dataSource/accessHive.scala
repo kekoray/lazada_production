@@ -1,4 +1,4 @@
-package dataSource
+package spark_OLAP.dataSource
 
 import java.time.LocalDate
 
@@ -9,7 +9,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: dataSource   
+ * @program: spark_OLAP.dataSource
  * @FileName: accessHive 
  * @description:  TODO   
  * @version: 1.0   

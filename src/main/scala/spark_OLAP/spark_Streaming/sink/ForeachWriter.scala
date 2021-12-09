@@ -1,4 +1,4 @@
-package spark_Streaming.sink
+package spark_OLAP.spark_Streaming.sink
 
 import java.sql.{Connection, DriverManager, Statement}
 import java.util.Properties
@@ -13,7 +13,7 @@ import org.apache.spark.sql.types.StructType
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: spark_Streaming.sink   
+ * @program: spark_OLAP.spark_Streaming.sink
  * @FileName: ForeachWriter 
  * @description:  TODO   
  * @version: 1.0   
@@ -84,7 +84,7 @@ import org.apache.spark.sql.types.StructType
     // ====================================================================
     // ----------  自定义Sink  ------------
     source.writeStream
-      .format("spark_Streaming.MySQLStreamSinkProvider") // 自定义sink类的StreamSinkProvider的class位置
+      .format("spark_OLAP.spark_Streaming.MySQLStreamSinkProvider") // 自定义sink类的StreamSinkProvider的class位置
       .option("checkpointLocation", "hdfs://cdh1:8020//dataset/checkpoint")
       .option("userName", "root")
       .option("password", "123456")

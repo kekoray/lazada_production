@@ -1,11 +1,11 @@
-package dataSource
+package spark_OLAP.dataSource
 
 import java.net.URI
 import java.time.LocalDate
 import java.util.Properties
 
-import dataSource.accessFile.Pay
-import nk_part.dataSet_op.Person
+import spark_OLAP.dataSource.accessFile.Pay
+import spark_OLAP.nk_part.dataSet_op.Person
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -30,7 +30,7 @@ import scala.util.parsing.json.JSON
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: dataSource   
+ * @program: spark_OLAP.dataSource
  * @FileName: dataFrame_op 
  * @description:  TODO   
  * @version: 1.0   

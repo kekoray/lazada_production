@@ -1,4 +1,4 @@
-//package nk_part
+//package spark_OLAP.nk_part
 //
 //import org.apache.hadoop.hive.ql.exec.UDF
 //import org.apache.log4j.{Level, Logger}
@@ -12,7 +12,7 @@
 ///*
 // *
 // * @ProjectName: lazada_production
-// * @program: nk_part
+// * @program: spark_OLAP.nk_part
 // * @FileName: dataFarm_op
 // * @description:  TODO
 // * @version: 1.0

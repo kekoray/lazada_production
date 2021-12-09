@@ -1,4 +1,4 @@
-package spark_Streaming
+package spark_OLAP.spark_Streaming
 
 import java.io.{BufferedReader, InputStreamReader}
 import java.net.Socket
@@ -11,7 +11,7 @@ import org.apache.spark.streaming.receiver.Receiver
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: spark_Streaming   
+ * @program: spark_OLAP.spark_Streaming
  * @FileName: CustomReceiver 
  * @description:  TODO   
  * @version: 1.0   

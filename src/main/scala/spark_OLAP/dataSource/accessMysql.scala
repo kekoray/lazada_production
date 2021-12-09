@@ -1,4 +1,4 @@
-package dataSource
+package spark_OLAP.dataSource
 
 import java.util.Properties
 
@@ -8,7 +8,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructFi
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: dataSource   
+ * @program: spark_OLAP.dataSource
  * @FileName: accessMysql 
  * @description:  TODO   
  * @version: 1.0   

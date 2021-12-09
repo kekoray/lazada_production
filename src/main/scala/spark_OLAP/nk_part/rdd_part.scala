@@ -1,4 +1,4 @@
-//package nk_part
+//package spark_OLAP.nk_part
 //
 //import org.apache.log4j.{Level, Logger}
 //import org.apache.spark.rdd.RDD
@@ -12,7 +12,7 @@
 // *
 // * @ProjectName: lazada_production
 // * @program:
-// * @FileName: nk_part.rdd_part
+// * @FileName: spark_OLAP.nk_part.rdd_part
 // * @description:  TODO
 // * @version: 1.0
 // * *
@@ -28,7 +28,7 @@
 //    // =======================================================================
 //    // ===========================  RDD创建  ================================
 //    // ***********************************************************************
-//    val conf = new SparkConf().setAppName("nk_part.rdd_part").setMaster("local[2]")
+//    val conf = new SparkConf().setAppName("spark_OLAP.nk_part.rdd_part").setMaster("local[2]")
 //    val sc = new SparkContext(conf)
 //
 //    // 1.通过本地集合直接创建,使用parallelize和makeRDD

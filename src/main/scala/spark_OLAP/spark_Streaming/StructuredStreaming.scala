@@ -1,4 +1,4 @@
-package spark_Streaming
+package spark_OLAP.spark_Streaming
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.{Dataset, SparkSession}
@@ -6,7 +6,7 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: spark_Streaming   
+ * @program: spark_OLAP.spark_Streaming
  * @FileName: StructuredStreaming 
  * @description:  TODO   
  * @version: 1.0   

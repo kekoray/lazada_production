@@ -1,4 +1,4 @@
-package spark_Streaming
+package spark_OLAP.spark_Streaming
 
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.execution.streaming.Sink

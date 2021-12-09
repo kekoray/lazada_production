@@ -1,4 +1,4 @@
-//package nk_part
+//package spark_OLAP.nk_part
 //
 //import org.apache.log4j.{Level, Logger}
 //import org.apache.spark.sql.types.{IntegerType, StructField, StructType}

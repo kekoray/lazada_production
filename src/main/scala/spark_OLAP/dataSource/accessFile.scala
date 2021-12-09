@@ -1,4 +1,4 @@
-package dataSource
+package spark_OLAP.dataSource
 
 import org.apache.spark
 import org.apache.spark.rdd.RDD
@@ -10,7 +10,7 @@ import scala.util.parsing.json.JSON
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: dataSource   
+ * @program: spark_OLAP.dataSource
  * @FileName: accessFile 
  * @description:  TODO   
  * @version: 1.0   

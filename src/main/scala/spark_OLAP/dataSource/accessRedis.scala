@@ -1,4 +1,4 @@
-package dataSource
+package spark_OLAP.dataSource
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: dataSource   
+ * @program: spark_OLAP.dataSource
  * @FileName: accessRedis 
  * @description:  TODO   
  * @version: 1.0   
