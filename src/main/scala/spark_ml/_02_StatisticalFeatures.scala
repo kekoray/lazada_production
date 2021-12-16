@@ -5,7 +5,7 @@ import org.apache.spark.mllib.linalg
 import org.apache.spark.mllib.linalg.{Matrix, Vectors}
 import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 /*
  * 
@@ -41,7 +41,7 @@ import org.apache.spark.sql.SparkSession
     println(summary.normL2) // L2范数(欧几里得距离):每列的各元素的平方和然后求平方根
 
 
-    //
+    // 统计两个RDD的相关系数,两个输入的RDD需要有相同数量的分区,并且每个分区中的元素数量相同
     val data1: RDD[Double] = sc.parallelize(Seq(1.0, 2.0, 3.0, 4.0))
     val data2: RDD[Double] = sc.parallelize(Seq(2.0, 4.0, 6.0, 8.0))
     val corr: Double = Statistics.corr(data1, data2)
