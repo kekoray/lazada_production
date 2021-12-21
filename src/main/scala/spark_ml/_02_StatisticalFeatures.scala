@@ -2,11 +2,14 @@ package spark_ml
 
 import org.apache.calcite.rel.core.Correlate
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.ml
 import org.apache.spark.mllib.linalg
 import org.apache.spark.mllib.linalg.{Matrix, Vectors}
 import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.ml.stat.Correlation
+import org.apache.spark.mllib.random.RandomRDDs._
 
 /*
  * 
@@ -68,18 +71,45 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
         1.0  1.0  1.0   */
 
 
+    // 3.DataFrame类型构建相关系数矩阵
+    // 与mllib包的RDD类型代码公用的时候,注意两种类型的Vectors导包问题,可能会报错
     import spark.implicits._
-    val data3 = Seq(
-      Vectors.sparse(4, Seq((0, 1.0), (3, -2.0))),
-      Vectors.dense(4.0, 5.0, 0.0, 3.0),
-      Vectors.dense(6.0, 7.0, 0.0, 8.0),
-      Vectors.sparse(4, Seq((0, 9.0), (3, 1.0)))
+    val data3: Seq[ml.linalg.Vector] = Seq(
+      ml.linalg.Vectors.sparse(4, Seq((0, 1.0), (3, -2.0))),
+      ml.linalg.Vectors.dense(4.0, 5.0, 0.0, 3.0),
+      ml.linalg.Vectors.dense(6.0, 7.0, 0.0, 8.0),
+      ml.linalg.Vectors.sparse(4, Seq((0, 9.0), (3, 1.0)))
     )
     val featuresDF: DataFrame = data3.map(Tuple1.apply).toDF("features")
-
+    val corrDF: DataFrame = Correlation.corr(featuresDF, "features")
+    corrDF.show(false)
+    /*
+        +------------------------------------------------------------------------
+        |pearson(features)
+        +------------------------------------------------------------------------
+        1.0                     0.055641488407465814   NaN    0.4004714203168137
+        0.055641488407465814    1.0                    NaN    0.9135958615342522
+        NaN                     NaN                    1.0    NaN
+        0.4004714203168137      0.9135958615342522     NaN    1.0
+        +------------------------------------------------------------------------
+     */
 
 
     // ===============  随机数  ===============
+    /*
+       seed随机数种子,保证随机选择数据的可重复性,即无论程序重跑多少次,随机结果始终不会变
+       随机数作用:
+             1.随机数可以用于随机生成制定分布方式的数据
+             2.随机数可以用于将数据集进行训练集和测试集的拆分
+     */
+    // 1.生成标准正态分布的随机数
+    val normalData: RDD[Double] = normalRDD(sc, 10L, 1, 456L)
+    normalData.foreach(println(_))
+
+    // 2.拆分数据集
+    val arrayData: Array[RDD[Double]] = normalData.randomSplit(Array(0.8, 0.2), 123L)
+    val trainingSet: RDD[Double] = arrayData(0)
+    val testSet: RDD[Double] = arrayData(1)
 
 
   }
