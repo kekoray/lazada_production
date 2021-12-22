@@ -2,13 +2,15 @@ package spark_ml
 
 import org.apache.calcite.rel.core.Correlate
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.ml
+import org.apache.spark.{ml, mllib}
+import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.mllib.linalg
 import org.apache.spark.mllib.linalg.{Matrix, Vectors}
 import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.ml.stat.Correlation
+import org.apache.spark.ml.stat.Summarizer.{max, mean, normL1, variance}
 import org.apache.spark.mllib.random.RandomRDDs._
 
 /*
@@ -30,10 +32,12 @@ import org.apache.spark.mllib.random.RandomRDDs._
     sc.setLogLevel("WARN")
 
 
-    // =============  统计特征  =================
+    // =============  统计特性  =================
     // 统计特征: 均值,方差,非0值的个数等..
+
+    // 1.rdd方式--统计特性
     val data = sc.textFile("src/main/resources/ML_data/testdata.txt")
-    val vector: RDD[linalg.Vector] = data.map(_.split(" ").map(_.toDouble)).map(Vectors.dense(_))
+    val vector: RDD[linalg.Vector] = data.map(_.split(" ").map(_.toDouble)).map(mllib.linalg.Vectors.dense(_))
 
     // 通过colStats按列汇总统计信息,然后才能使用均值,方差等的统计方法;
     val summary: MultivariateStatisticalSummary = Statistics.colStats(vector)
@@ -45,6 +49,23 @@ import org.apache.spark.mllib.random.RandomRDDs._
     println(summary.variance) // 方差
     println(summary.normL1) // L1范数(曼哈段距离):每列的各个元素绝对值之和
     println(summary.normL2) // L2范数(欧几里得距离):每列的各元素的平方和然后求平方根
+
+
+    /* 2.DataFrame方式--统计特性
+       DataFrame方式的ml.stat.Summarizer统计特征,要在spark-mllib/spark-sql在2.4.0版本以上才有的新功能
+      导包路径:  import org.apache.spark.ml.stat.Summarizer._
+    */
+    import spark.implicits._
+
+    val dataDF: DataFrame = Seq(
+      (ml.linalg.Vectors.dense(2.0, 3.0, 5.0), 1.0),
+      (ml.linalg.Vectors.dense(4.0, 6.0, 7.0), 2.0)
+    ).toDF("features", "weight")
+
+    val (meanVal, varianceVal, maxVal, normL1Val) = dataDF.select(mean('features), variance('features), max('features), normL1('features))
+      .as[(Vector, Vector, Vector, Vector)].first()
+
+    println(s" mean = ${meanVal}, variance = ${varianceVal}, max = ${maxVal}, normL1 = ${normL1Val}")
 
 
     // ===============  统计相关系数  ===============
@@ -62,7 +83,8 @@ import org.apache.spark.mllib.random.RandomRDDs._
     val corr: Double = Statistics.corr(data1, data2)
     println("==>" + corr) // 1.0000000000000002
 
-    // 2.构建相关系数矩阵 (工作常用)
+
+    // 2.rdd方式--构建相关系数矩阵 (工作常用)
     val matrix: Matrix = Statistics.corr(vector, method = "pearson")
     println("==>" + matrix)
     /*
@@ -71,7 +93,7 @@ import org.apache.spark.mllib.random.RandomRDDs._
         1.0  1.0  1.0   */
 
 
-    // 3.DataFrame类型构建相关系数矩阵
+    // 3.DataFrame方式--构建相关系数矩阵
     // 与mllib包的RDD类型代码公用的时候,注意两种类型的Vectors导包问题,可能会报错
     import spark.implicits._
     val data3: Seq[ml.linalg.Vector] = Seq(

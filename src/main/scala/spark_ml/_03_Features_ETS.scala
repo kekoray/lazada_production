@@ -1,9 +1,10 @@
 package spark_ml
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.ml.feature.{Binarizer, Bucketizer, IndexToString, MaxAbsScaler, MinMaxScaler, OneHotEncoder, StandardScaler, StringIndexer, StringIndexerModel, VectorAssembler}
+import org.apache.spark.ml.feature.{Binarizer, Bucketizer, ChiSqSelector, IndexToString, MaxAbsScaler, MinMaxScaler, OneHotEncoder, StandardScaler, StringIndexer, StringIndexerModel, VectorAssembler}
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.mllib.stat.Statistics
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 /*
  * 
@@ -120,11 +121,11 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     // =================  2.数值型数据的归一化和标准化  ================
     /*
       (a).归一化操作,即在具备不同量纲的前提下,通过归一化操作能够将所有的数据归一化到[0,1]或[-1,1]的区间,从而降低因为量纲对模型带来的影响;
-          MinMaxScaler: （当前的值-最小值）/（最大值-最小值),可以将数据归一化到[最小值,最大值]=[0,1]区间
-          MaxAbsScaler:   (当前的值)/max(abs(这一列的取值)),可以将数据归一化到[-1,1]区间
+          MinMaxScaler:  (当前的值-当前列的最小值)/(当前列的最大值-当前列的最小值),可以将数据归一化到[最小值,最大值]=[0,1]区间
+          MaxAbsScaler:  (当前的值)/max(abs(当前列的取值)),可以将数据归一化到[-1,1]区间
 
       (b).标准化操作,因为某些算法需要数据呈现为标准正态分布,所以需要对数据进行标准化
-          StandSclaer:  当前的值减去均值或者方差,适合于正态分布转化为标准正态分布的数据
+          StandSclaer:  (当前的值-均值)/方差,适合于非标准正态分布或者正态分布的数据转化为标准正态分布的数据
      */
 
     val df3 = spark.createDataFrame(Seq(
@@ -141,18 +142,19 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     /*
           +---+--------------+-----------------------------------------------------------+
           |id |features      |MinMaxfeatures                                             |
+          +---+--------------+-----------------------------------------------------------+          (当前的值-当前列的最小值)/(当前列的最大值-当前列的最小值)
+          |0  |[1.0, 0.5, -1.0]|[0.0, 0.0, 0.0]                                              |      (1-1)/(4-1) = 0
+          |1  |[2.0, 1.0, 1.0] |[0.3333333333333333, 0.05263157894736842, 0.6666666666666666]|      (2-1)/(4-1) = 0.3333333333333333
+          |2  |[4.0, 10.0, 2.0]|[1.0, 1.0, 1.0]                                              |      (4-1)/(4-1) = 1
           +---+--------------+-----------------------------------------------------------+
-          |0  |[1.0,0.5,-1.0]|[0.0,0.0,0.0]                                              |
-          |1  |[2.0,1.0,1.0] |[0.3333333333333333,0.05263157894736842,0.6666666666666666]|
-          |2  |[4.0,10.0,2.0]|[1.0,1.0,1.0]                                              |
-          +---+--------------+-----------------------------------------------------------+
+
 
           +---+--------------+----------------+
           |id |features      |MaxAbsfeatures  |
-          +---+--------------+----------------+
-          |0  |[1.0,0.5,-1.0]|[0.25,0.05,-0.5]|
-          |1  |[2.0,1.0,1.0] |[0.5,0.1,0.5]   |
-          |2  |[4.0,10.0,2.0]|[1.0,1.0,1.0]   |
+          +---+--------------+----------------+         (当前的值)/max(abs(当前列的取值))
+          |0  |[1.0, 0.5, -1.0]|[0.25, 0.05, -0.5]|     1/4 = 0.25
+          |1  |[2.0, 1.0, 1.0] |[0.5, 0.1, 0.5]   |     2/4 = 0.5
+          |2  |[4.0, 10.0, 2.0]|[1.0, 1.0, 1.0]   |     4/4 = 1
           +---+--------------+----------------+
           */
 
@@ -169,6 +171,11 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
           |2  |[4.0,10.0,2.0]|[2.6186146828319083,1.8704390591656492,1.3093073414159542]  |
           +---+--------------+------------------------------------------------------------+
      */
+    import spark.implicits._
+    import org.apache.spark.sql.functions._
+
+    df3.select(mean($"features"))
+
 
 
     // =================  3.连续值数据的离散化  ================
@@ -241,6 +248,34 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     //=========================================================
     //=================  3.Feature Selectors  ==================
     //=========================================================
+    /*
+      特征选择:
+          1.df.select()直接获取特征列
+          2.卡方验证选择: 使用具有分类特征的标签数据,根据卡方验证方法,选择出与标签列最相关的特征列;
+     */
+    val dataDF2 = spark.createDataset(Seq(
+      (7, Vectors.dense(0.0, 0.0, 18.0, 1.0), 1.0),
+      (8, Vectors.dense(0.0, 1.0, 12.0, 0.0), 0.0),
+      (9, Vectors.dense(1.0, 0.0, 15.0, 0.1), 0.0)
+    )).toDF("id", "features", "clicked")
+
+
+    // 卡方验证选择
+    // setFeaturesCol()  特征列
+    // setLabelCol()     标签列
+    // setOutputCol()    输出列
+    // setNumTopFeatures()  选择出指定数量的卡方值最高的特征列
+    val chiSqSelector = new ChiSqSelector().setFeaturesCol("features").setLabelCol("clicked").setOutputCol("chisquareFeatures").setNumTopFeatures(2)
+    chiSqSelector.fit(dataDF2).transform(dataDF2).show(false)
+    /*
+        +---+------------------+-------+-----------------+
+        |id |features          |clicked|chisquareFeatures|
+        +---+------------------+-------+-----------------+
+        |7  |[0.0,0.0,18.0,1.0]|1.0    |[18.0,1.0]       |
+        |8  |[0.0,1.0,12.0,0.0]|0.0    |[12.0,0.0]       |
+        |9  |[1.0,0.0,15.0,0.1]|0.0    |[15.0,0.1]       |
+        +---+------------------+-------+-----------------+
+     */
 
   }
 

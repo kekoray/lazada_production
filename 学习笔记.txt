@@ -4,7 +4,7 @@
 4.binarizer只能划分2种类别,少用;
 5.多用bucketizer,可以指定条件划分多种类别的数据
 6. 案例中有提到RDD/DF方式去选某一列做特征统计的方法;
-RDD=>DF的方法:
-1.样例类+map写入+toDF
-2.row+map写入+schema++createDF
-3.
+        RDD=>DF的方法:
+        1.样例类+map写入+toDF
+        2.row+map写入+schema++createDF
+        3.
