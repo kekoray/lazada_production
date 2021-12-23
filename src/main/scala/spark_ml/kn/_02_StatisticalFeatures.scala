@@ -1,28 +1,27 @@
-package spark_ml
+package spark_ml.kn
 
-import org.apache.calcite.rel.core.Correlate
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.{ml, mllib}
-import org.apache.spark.ml.linalg.{Vector, Vectors}
-import org.apache.spark.mllib.linalg
-import org.apache.spark.mllib.linalg.{Matrix, Vectors}
-import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.stat.Correlation
 import org.apache.spark.ml.stat.Summarizer.{max, mean, normL1, variance}
-import org.apache.spark.mllib.random.RandomRDDs._
+import org.apache.spark.mllib.linalg
+import org.apache.spark.mllib.linalg.Matrix
+import org.apache.spark.mllib.random.RandomRDDs.normalRDD
+import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.{ml, mllib}
 
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: spark_ml   
- * @FileName: _02_StatisticalFeatures 
- * @description:  TODO   
- * @version: 1.0   
+ * @program: spark_ml
+ * @FileName: _02_StatisticalFeatures
+ * @description:  TODO
+ * @version: 1.0
  * *
- * @author: koray  
- * @create: 2021-12-09 15:57  
+ * @author: koray
+ * @create: 2021-12-09 15:57
  * @Copyright (c) 2021,All Rights Reserved.
  */ object _02_StatisticalFeatures {
   def main(args: Array[String]): Unit = {

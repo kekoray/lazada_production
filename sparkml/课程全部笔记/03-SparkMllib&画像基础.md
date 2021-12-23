@@ -64,11 +64,13 @@
        |         5.1|        3.5|         1.4|        0.2|Iris-setosa|       0.0|[5.1,3.5,1.4,0.2]|
        |         4.9|        3.0|         1.4|        0.2|Iris-setosa|       0.0|[4.9,3.0,1.4,0.2]|
        |         4.7|        3.2|         1.3|        0.2|Iris-setosa|       0.0|[4.7,3.2,1.3,0.2]|*/
-      //3-特征降维--pca主成分分析法，利用特征值和特征向量选择具有较高特征值对应的特征向量进行降维
+     
+        //3-特征降维--pca主成分分析法，利用特征值和特征向量选择具有较高特征值对应的特征向量进行降维
       val pca: PCA = new PCA().setInputCol("features").setOutputCol("pcaFeatures").setK(3)
       val pCAModel: PCAModel = pca.fit(vecDF)
       val pcaDF: DataFrame = pCAModel.transform(vecDF)
       pcaDF.show(false)
+        
       //4-MinMacScaler
       val scaler: MinMaxScaler = new MinMaxScaler().setInputCol("pcaFeatures").setOutputCol("minmaxFeatures")
       val scalerModel: MinMaxScalerModel = scaler.fit(pcaDF)
@@ -90,7 +92,7 @@
     }
   }
   ```
-
+  
 * 这里有两个需要解决的问题？
 
   * 1-什么时候用fit或Transformer？

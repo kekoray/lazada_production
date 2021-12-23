@@ -1,21 +1,20 @@
-package spark_ml
+package spark_ml.kn
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.ml.feature.{Binarizer, Bucketizer, ChiSqSelector, IndexToString, MaxAbsScaler, MinMaxScaler, OneHotEncoder, StandardScaler, StringIndexer, StringIndexerModel, VectorAssembler}
+import org.apache.spark.ml.feature._
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.mllib.stat.Statistics
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /*
  * 
  * @ProjectName: lazada_production  
- * @program: spark_ml   
- * @FileName: _03_Features_ETS 
- * @description:  TODO   
- * @version: 1.0   
+ * @program: spark_ml
+ * @FileName: _03_Features_ETS
+ * @description:  TODO
+ * @version: 1.0
  * *
- * @author: koray  
- * @create: 2021-12-21 11:51  
+ * @author: koray
+ * @create: 2021-12-21 11:51
  * @Copyright (c) 2021,All Rights Reserved.
  */ object _03_Features_ETS {
   def main(args: Array[String]): Unit = {
@@ -171,8 +170,8 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
           |2  |[4.0,10.0,2.0]|[2.6186146828319083,1.8704390591656492,1.3093073414159542]  |
           +---+--------------+------------------------------------------------------------+
      */
-    import spark.implicits._
     import org.apache.spark.sql.functions._
+    import spark.implicits._
 
     df3.select(mean($"features"))
 
