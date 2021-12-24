@@ -1,6 +1,7 @@
 package spark_ml.kn
 
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.ml
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -170,18 +171,13 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
           |2  |[4.0,10.0,2.0]|[2.6186146828319083,1.8704390591656492,1.3093073414159542]  |
           +---+--------------+------------------------------------------------------------+
      */
-    import org.apache.spark.sql.functions._
-    import spark.implicits._
-
-    df3.select(mean($"features"))
-
 
 
     // =================  3.连续值数据的离散化  ================
     /*
-    离散化的原因是因为连续性数据是不符合某些算法的要求的,比如决策树;
-       (a).二值化操作(Binarizer),只能划分成2种类别的数据
-       (b).分桶操作(Bucketizer),可以划分成多种类别的数据
+      离散化的原因是因为连续性数据是不符合某些算法的要求的,比如决策树;
+         (a).二值化操作(Binarizer),只能划分成2种类别的数据
+         (b).分桶操作(Bucketizer),可以划分成多种类别的数据
      */
 
     val df1 = spark.createDataFrame(Array((0, 0.1), (1, 8.0), (2, 0.2), (3, -2.0), (4, 0.0))).toDF("label", "feature")
@@ -252,7 +248,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
           1.df.select()直接获取特征列
           2.卡方验证选择: 使用具有分类特征的标签数据,根据卡方验证方法,选择出与标签列最相关的特征列;
      */
-    val dataDF2 = spark.createDataset(Seq(
+    val dataDF2 = spark.createDataFrame(Seq(
       (7, Vectors.dense(0.0, 0.0, 18.0, 1.0), 1.0),
       (8, Vectors.dense(0.0, 1.0, 12.0, 0.0), 0.0),
       (9, Vectors.dense(1.0, 0.0, 15.0, 0.1), 0.0)
@@ -275,6 +271,37 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
         |9  |[1.0,0.0,15.0,0.1]|0.0    |[15.0,0.1]       |
         +---+------------------+-------+-----------------+
      */
+
+
+    //=========================================================
+    //============  4.Feature Dimensionality Reduction  =======
+    //=========================================================
+    /*
+      特征降维:
+          PCA主成分分析,是一种无监督线性数据转换技术,主要作用是特征降维,即把具有相关性的高维变量转换为线性无关的低维变量,减少数据集的维数,同时保持数据集对方差贡献最大的特征;
+          所以当数据集在不同维度上的方差分布不均匀的时候,PCA最有用;
+
+        原理:
+           所谓的主成分分析,不过是在高维的空间中寻找一个低维的正交坐标系;
+           比如说在三维空间中寻找一个二维的直角坐标系,那么这个二维的直角坐标系就会构成一个平面,将三维空间中的各个点在这个二维平面上做投影,就得到了各个点在二维空间中的一个表示,由此数据点就从三维降成了二维.
+
+        API用法:
+             PCA算法转换的是特征向量,需要将降维的字段转为向量字段
+             setK() 主成分的数量,必须小于等于降维字段个数
+     */
+    val pca: PCA = new PCA().setInputCol("features").setOutputCol("features_pca").setK(2)
+    val pcaDF = pca.fit(dataDF2).transform(dataDF2)
+    pcaDF.show(false)
+    /*
+       +---+------------------+-------+----------------------------------------+
+      |id |features          |clicked|features_pca                            |
+      +---+------------------+-------+----------------------------------------+
+      |7  |[0.0,0.0,18.0,1.0]|1.0    |[17.681719144883022,-0.5910509417080694]|
+      |8  |[0.0,1.0,12.0,0.0]|0.0    |[11.517306699961809,-0.5866681457448389]|
+      |9  |[1.0,0.0,15.0,0.1]|0.0    |[14.61657922764673,0.5984520165752177]  |
+      +---+------------------+-------+----------------------------------------+
+     */
+
 
   }
 
