@@ -63,11 +63,13 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
       .setFeaturesCol("hashFeatures")
       .setPredictionCol("predictioncol")
 
+
     // 4.管道操作
     val pipeline = new Pipeline().setStages(Array(tokenizer, hashingTF, lr))
     val pipelineModel: PipelineModel = pipeline.fit(training)
     //    val showResult: DataFrame = pipelineModel.transform(training)
     //    showResult.show(false)
+
 
     // 5.交叉验证和网格搜索
     // 5-1.设置网格搜索需要搜索的参数
@@ -76,14 +78,13 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
       .addGrid(lr.regParam, Array(0.01, 0.001))
       .build()
 
-    // 5-2.评估校验器,因为分类问题的准确率就是标准,所以使用标准验证;
+    // 5-2.评估校验器,因为分类问题的准确率就是标准,所以设置指标名称为标准验证accuracy;
     val evaluator: MulticlassClassificationEvaluator = new MulticlassClassificationEvaluator()
       .setLabelCol("label")
       .setPredictionCol("predictioncol")
-      .setMetricName("accuracy") // 设置指标名称
+      .setMetricName("accuracy")
 
     // 5-3.交叉验证
-
     // ---------------  5-3-1.k折交叉验证  --------------------------
     val crossValidator: CrossValidator = new CrossValidator()
       .setNumFolds(3) // 数据集划分的份数
@@ -129,12 +130,24 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
         }
      */
 
+    // 6.超参数的设置应用
+    // ---------------  6-1.set方式直接设置参数  --------------------------
+    lr.setMaxIter(101).setRegParam(0.01)
 
-    // 6.模型保存
-    // 首先判断当前模型是否存在，如果存在的直接load，如果不存在在本地创建
-    val path = "src/main/resources/model_dir"
-    pipelineModel.save(path)
-    PipelineModel.load(path).transform(training)
+
+    // ---------------  6-2.fit方式设置参数  --------------------------
+    // 6-2-1.指定多个参数的Map
+    val paramMap = ParamMap(lr.maxIter -> 101, lr.regParam -> 0.01)
+      .put(lr.labelCol -> "labelCol")
+    // 6-2-2.fit方式设置参数,会覆盖set方式
+    pipeline.fit(training, paramMap)
+
+
+    // 7.模型保存
+    pipelineModel.write.overwrite().save("src/main/resources/model_dir/")
+
+    // 8.模型加载
+    PipelineModel.load("src/main/resources/model_dir/").transform(training)
 
     spark.stop()
   }
