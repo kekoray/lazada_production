@@ -342,7 +342,7 @@
     /**
      * DESC:描述本地向量构建思路
      */
-    object _07SparkMllibVectorSummary {j
+    object _07SparkMllibVectorSummary {
       def main(args: Array[String]): Unit = {
     
         val conf: SparkConf = new SparkConf().setMaster("local[*]").setAppName("_07SparkMllibVectorSummary")
