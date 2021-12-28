@@ -2,7 +2,7 @@ package spark_ml.kn
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionSummary}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer}
 import org.apache.spark.ml.param.ParamMap
@@ -67,8 +67,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     // 4.管道操作
     val pipeline = new Pipeline().setStages(Array(tokenizer, hashingTF, lr))
     val pipelineModel: PipelineModel = pipeline.fit(training)
-    //    val showResult: DataFrame = pipelineModel.transform(training)
-    //    showResult.show(false)
 
 
     // 5.交叉验证和网格搜索
@@ -78,7 +76,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
       .addGrid(lr.regParam, Array(0.01, 0.001))
       .build()
 
-    // 5-2.评估校验器,因为分类问题的准确率就是标准,所以设置指标名称为标准验证accuracy;
+    // 5-2.模型校验器,因为分类问题的准确率就是标准,所以设置指标名称为标准验证accuracy;
     val evaluator: MulticlassClassificationEvaluator = new MulticlassClassificationEvaluator()
       .setLabelCol("label")
       .setPredictionCol("predictioncol")
@@ -90,7 +88,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
       .setNumFolds(3) // 数据集划分的份数
       .setEstimator(pipeline) // 需要搜索的Estimator
       .setEstimatorParamMaps(paramMaps) // 需要搜索的参数
-      .setEvaluator(evaluator) // 评估校验器,做交叉验证是为了验证哪个参数好
+      .setEvaluator(evaluator) // 模型校验器,做交叉验证是为了验证哪个参数好
     val crossValidatorModel = crossValidator.fit(training)
 
 
@@ -130,18 +128,17 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
         }
      */
 
+
     // 6.超参数的设置应用
     // ---------------  6-1.set方式直接设置参数  --------------------------
     lr.setMaxIter(101).setRegParam(0.01)
 
-
     // ---------------  6-2.fit方式设置参数  --------------------------
     // 6-2-1.指定多个参数的Map
     val paramMap = ParamMap(lr.maxIter -> 101, lr.regParam -> 0.01)
-      .put(lr.labelCol -> "labelCol")
+      .put(lr.threshold -> 0.55)
     // 6-2-2.fit方式设置参数,会覆盖set方式
-    pipeline.fit(training, paramMap)
-
+    pipeline.fit(training, paramMap).transform(training).show(false)
 
     // 7.模型保存
     pipelineModel.write.overwrite().save("src/main/resources/model_dir/")
