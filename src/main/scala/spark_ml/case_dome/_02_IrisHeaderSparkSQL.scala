@@ -56,9 +56,22 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     val featureeDF = vectorAssembler.transform(stringIndexDF)
     //    featureeDF.show(false)
 
-    // 3.特征降维--pca主成分分析法，利用特征值和特征向量选择具有较高特征值对应的特征向量进行降维
-    // setK() 主成分的数量
-    val pca = new PCA().setInputCol("features").setOutputCol("pcaFeatures").setK(4)
+    // 3.特征降维--pca主成分分析法,利用特征值和特征向量选择具有较高特征值对应的特征向量进行降维
+    /*
+    
+        PCA主成分分析,是一种无监督线性数据转换技术,主要作用是特征降维,即把具有相关性的高维变量转换为线性无关的低维变量,减少数据集的维数,同时保持数据集对方差贡献最大的特征;
+        所以当数据集在不同维度上的方差分布不均匀的时候,PCA最有用;
+
+        原理:
+           所谓的主成分分析,不过是在高维的空间中寻找一个低维的正交坐标系;
+           比如说在三维空间中寻找一个二维的直角坐标系,那么这个二维的直角坐标系就会构成一个平面,将三维空间中的各个点在这个二维平面上做投影,就得到了各个点在二维空间中的一个表示,由此数据点就从三维降成了二维.
+
+        API用法:
+             PCA算法转换的是特征向量,需要将降维的字段转为向量字段
+             setK() 主成分的数量,必须小于等于降维字段个数
+     */
+    // setK()
+    val pca = new PCA().setInputCol("features").setOutputCol("pcaFeatures").setK(2)
     val pcaFeaturesDF = pca.fit(featureeDF).transform(featureeDF)
     //    pcaFeaturesDF.show(false)
 
