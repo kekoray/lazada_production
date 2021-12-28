@@ -70,7 +70,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 
     // 5.交叉验证和网格搜索
-    // 5-1.设置网格搜索需要搜索的参数
+    // 5-1.设置网格搜索需要搜索的参数,一般都是在默认值的左右两侧选定
     val paramMaps: Array[ParamMap] = new ParamGridBuilder()
       .addGrid(lr.maxIter, Array(101, 99, 110))
       .addGrid(lr.regParam, Array(0.01, 0.001))
