@@ -2,7 +2,7 @@ package spark_ml.kn
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionSummary}
+import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel, LogisticRegressionSummary}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer}
 import org.apache.spark.ml.param.ParamMap
@@ -92,13 +92,14 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     val crossValidatorModel = crossValidator.fit(training)
 
 
+
     // ---------------  5-3-2.训练集交叉验证  --------------------------
-    val trainValidationSplit: TrainValidationSplit = new TrainValidationSplit()
-      .setTrainRatio(0.8) // 训练集和验证集的占比
-      .setEstimator(pipeline)
-      .setEstimatorParamMaps(paramMaps)
-      .setEvaluator(evaluator)
-    val trainValidationSplitModel = trainValidationSplit.fit(training)
+    //    val trainValidationSplit: TrainValidationSplit = new TrainValidationSplit()
+    //      .setTrainRatio(0.8) // 训练集和验证集的占比
+    //      .setEstimator(pipeline)
+    //      .setEstimatorParamMaps(paramMaps)
+    //      .setEvaluator(evaluator)
+    //    val trainValidationSplitModel = trainValidationSplit.fit(training)
 
 
     // 5-4.获取算法的最佳超参数信息
@@ -107,8 +108,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
          bestModel: 从k则交叉验证中选择出最佳的模型
          extractParamMap(): 获取的参数的映射情况
      */
-    println(crossValidatorModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
-    println(trainValidationSplitModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
+    //    println(crossValidatorModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
+    //    println(trainValidationSplitModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
     /*
         {
           logreg_21dce36e16a4-aggregationDepth: 2,                    聚合深度
@@ -127,6 +128,9 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
           logreg_21dce36e16a4-tol: 1.0E-6
         }
      */
+
+    // 显示算法在每个训练迭代中的执行过程
+    println(crossValidatorModel.bestModel.asInstanceOf[PipelineModel].stages(2).asInstanceOf[LogisticRegressionModel].summary.objectiveHistory)
 
 
     // 6.超参数的设置应用
