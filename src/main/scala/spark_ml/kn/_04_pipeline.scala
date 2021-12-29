@@ -61,9 +61,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     )
 
     // 3.训练集和测试集的划分
-    val dataArray = irisDF.randomSplit(Array(0.8, 0.2))
-    val trainingSet = dataArray(0)
-    val testSet = dataArray(1)
+    val Array(trainingSet, testSet) = irisDF.randomSplit(Array(0.8, 0.2))
 
     // 4.特征工程
     // 4-1.类别数据的数值化
