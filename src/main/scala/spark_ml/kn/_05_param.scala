@@ -68,7 +68,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     val pipeline = new Pipeline().setStages(Array(tokenizer, hashingTF, lr))
     val pipelineModel: PipelineModel = pipeline.fit(training)
 
-
     // 5.交叉验证和网格搜索
     // 5-1.设置网格搜索需要搜索的参数,一般都是在默认值的左右两侧选定
     val paramMaps: Array[ParamMap] = new ParamGridBuilder()
@@ -92,14 +91,13 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     val crossValidatorModel = crossValidator.fit(training)
 
 
-
     // ---------------  5-3-2.训练集交叉验证  --------------------------
-    //    val trainValidationSplit: TrainValidationSplit = new TrainValidationSplit()
-    //      .setTrainRatio(0.8) // 训练集和验证集的占比
-    //      .setEstimator(pipeline)
-    //      .setEstimatorParamMaps(paramMaps)
-    //      .setEvaluator(evaluator)
-    //    val trainValidationSplitModel = trainValidationSplit.fit(training)
+    val trainValidationSplit: TrainValidationSplit = new TrainValidationSplit()
+      .setTrainRatio(0.8) // 训练集和验证集的占比
+      .setEstimator(pipeline)
+      .setEstimatorParamMaps(paramMaps)
+      .setEvaluator(evaluator)
+    val trainValidationSplitModel = trainValidationSplit.fit(training)
 
 
     // 5-4.获取算法的最佳超参数信息
@@ -108,8 +106,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
          bestModel: 从k则交叉验证中选择出最佳的模型
          extractParamMap(): 获取的参数的映射情况
      */
-    //    println(crossValidatorModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
-    //    println(trainValidationSplitModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
+    println(crossValidatorModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
+    println(trainValidationSplitModel.bestModel.asInstanceOf[PipelineModel].stages(2).extractParamMap())
     /*
         {
           logreg_21dce36e16a4-aggregationDepth: 2,                    聚合深度
@@ -130,8 +128,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
      */
 
     // 显示算法在每个训练迭代中的执行过程
-    println(crossValidatorModel.bestModel.asInstanceOf[PipelineModel].stages(2).asInstanceOf[LogisticRegressionModel].summary.objectiveHistory)
-
+    //    println(crossValidatorModel.bestModel.asInstanceOf[PipelineModel].stages(2).asInstanceOf[LogisticRegressionModel].summary.objectiveHistory)
 
     // 6.超参数的设置应用
     // ---------------  6-1.set方式直接设置参数  --------------------------
@@ -142,10 +139,11 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
     val paramMap = ParamMap(lr.maxIter -> 101, lr.regParam -> 0.01)
       .put(lr.threshold -> 0.55)
     // 6-2-2.fit方式设置参数,会覆盖set方式
-    pipeline.fit(training, paramMap).transform(training).show(false)
+    val resultModel: PipelineModel = pipeline.fit(training, paramMap)
+    resultModel.transform(training).show(false)
 
     // 7.模型保存
-    pipelineModel.write.overwrite().save("src/main/resources/model_dir/")
+    resultModel.write.overwrite().save("src/main/resources/model_dir/")
 
     // 8.模型加载
     PipelineModel.load("src/main/resources/model_dir/").transform(training)
