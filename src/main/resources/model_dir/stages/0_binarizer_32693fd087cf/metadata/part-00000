@@ -1,0 +1,1 @@
+{"class":"org.apache.spark.ml.feature.Binarizer","timestamp":1641527154984,"sparkVersion":"2.4.2","uid":"binarizer_32693fd087cf","paramMap":{"inputCol":"features","outputCol":"features_binarizer","threshold":0.5},"defaultParamMap":{"outputCol":"binarizer_32693fd087cf__output","threshold":0.0}}

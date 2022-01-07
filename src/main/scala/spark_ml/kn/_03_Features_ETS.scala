@@ -248,7 +248,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
           1.df.select()直接获取特征列
           2.卡方验证选择: 使用具有分类特征的标签数据,根据卡方验证方法,选择出与标签列最相关的特征列;
      */
-    val dataDF2 = spark.createDataFrame(Seq(
+    val dataDF2: DataFrame = spark.createDataFrame(Seq(
       (7, Vectors.dense(0.0, 0.0, 18.0, 1.0), 1.0),
       (8, Vectors.dense(0.0, 1.0, 12.0, 0.0), 0.0),
       (9, Vectors.dense(1.0, 0.0, 15.0, 0.1), 0.0)
