@@ -97,8 +97,6 @@ import org.apache.spark.sql.SparkSession
         }
      */
 
-
-
     // 保存模型
     println("校验模型的准确率为  ==> " + evaluator.evaluate(trainingDF))
     pipelineModel.write.overwrite().save("src/main/resources/model_dir")
