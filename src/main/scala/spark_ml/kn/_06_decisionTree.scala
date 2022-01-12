@@ -48,9 +48,15 @@ import org.apache.spark.sql.SparkSession
     val binarizer = new Binarizer().setInputCol("features").setOutputCol("features_binarizer").setThreshold(0.5)
 
     // 5.决策树算法
+    /*
+      setMaxDepth()  树的最大深度
+      setMaxBins()   每个分支的最大叶子节点个数
+      setMinInstancesPerNode()  如果某个节点的样本数量小于该值,则该节点将不再被分叉
+
+     */
     val decisionTreeRegressor: DecisionTreeRegressor = new DecisionTreeRegressor().setFeaturesCol("features_binarizer").setLabelCol("label").setPredictionCol("predictioncol")
       .setMaxDepth(5)
-      .setMaxBins(2)
+      .setMaxBins(32)
 
     // 6.管道操作
     val pipeline: Pipeline = new Pipeline().setStages(Array(binarizer, decisionTreeRegressor))
